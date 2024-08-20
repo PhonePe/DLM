@@ -105,6 +105,7 @@
         <jdk.target.version>17</jdk.target.version>
         <jdk.release.version>17</jdk.release.version>
 
+        <sonar.projectKey>PhonePe_DLM</sonar.projectKey>
         <sonar.organization>phonepe</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
