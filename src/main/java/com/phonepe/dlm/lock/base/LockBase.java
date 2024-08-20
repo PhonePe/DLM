@@ -29,6 +29,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
@@ -36,8 +37,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Builder
 @Getter
 public class LockBase implements ILockable {
-    public static final int DEFAULT_LOCK_TTL_SECONDS = 90;
-    public static final int DEFAULT_WAIT_FOR_LOCK_IN_SECONDS = 90;
+    public static final Duration DEFAULT_LOCK_TTL_SECONDS = Duration.ofSeconds(90);
+    public static final Duration DEFAULT_WAIT_FOR_LOCK_IN_SECONDS = Duration.ofSeconds(90);
     public static final int WAIT_TIME_FOR_NEXT_RETRY = 1000; // 1 second
 
     private final ILockStore lockStore;
@@ -49,7 +50,7 @@ public class LockBase implements ILockable {
     }
 
     @Override
-    public void tryAcquireLock(final Lock lock, final int duration) {
+    public void tryAcquireLock(final Lock lock, final Duration duration) {
         writeToStore(lock, duration);
     }
 
@@ -59,14 +60,14 @@ public class LockBase implements ILockable {
     }
 
     @Override
-    public void acquireLock(final Lock lock, final int duration) {
+    public void acquireLock(final Lock lock, final Duration duration) {
         acquireLock(lock, duration, DEFAULT_WAIT_FOR_LOCK_IN_SECONDS);
     }
 
     @SneakyThrows
     @Override
-    public void acquireLock(final Lock lock, final int duration, final int timeout) {
-        final Timer timer = new Timer(System.currentTimeMillis(), timeout);
+    public void acquireLock(final Lock lock, final Duration duration, final Duration timeout) {
+        final Timer timer = new Timer(System.currentTimeMillis(), timeout.getSeconds());
         final AtomicBoolean success = new AtomicBoolean(false);
         do {
             try {
@@ -96,7 +97,7 @@ public class LockBase implements ILockable {
         return false;
     }
 
-    private void writeToStore(final Lock lock, final int ttlSeconds) {
+    private void writeToStore(final Lock lock, final Duration ttlSeconds) {
         lockStore.write(lock.getLockId(), lock.getLockLevel(), lock.getFarmId(), ttlSeconds);
         lock.getAcquiredStatus().compareAndSet(false, true);
     }

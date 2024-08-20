@@ -95,7 +95,7 @@
 
         <!-- Test related properties -->
         <mockito.version>4.3.1</mockito.version>
-        <junit.testcontainer.version>1.0.6</junit.testcontainer.version>
+        <junit.testcontainer.version>1.0.14</junit.testcontainer.version>
         <jna.version>5.7.0</jna.version>
         <awaitility.version>4.1.1</awaitility.version>
         <junit.version>4.12</junit.version>
@@ -171,6 +171,12 @@
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
             <version>${awaitility.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.appform.testcontainer</groupId>
+            <artifactId>junit-testcontainer-commons</artifactId>
+            <version>${junit.testcontainer.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

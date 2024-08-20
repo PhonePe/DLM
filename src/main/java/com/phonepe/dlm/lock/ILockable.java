@@ -18,6 +18,9 @@ package com.phonepe.dlm.lock;
 
 import com.phonepe.dlm.exception.ErrorCode;
 import com.phonepe.dlm.lock.base.LockBase;
+
+import java.time.Duration;
+
 import com.phonepe.dlm.exception.DLMException;
 
 public interface ILockable {
@@ -41,7 +44,7 @@ public interface ILockable {
      * @param duration The lock duration in seconds for which lock will be held
      * @throws DLMException with {@link ErrorCode#LOCK_UNAVAILABLE} if lock is already acquired
      */
-    void tryAcquireLock(final Lock lock, final int duration);
+    void tryAcquireLock(final Lock lock, final Duration duration);
 
     /**
      * This method tries to acquire the lock, and if the lock is currently held by another thread,
@@ -67,7 +70,7 @@ public interface ILockable {
      * @param duration The lock duration in seconds for which lock will be held
      * @throws DLMException with {@link ErrorCode#LOCK_UNAVAILABLE} if lock is not available even after the timeout
      */
-    void acquireLock(final Lock lock, final int duration);
+    void acquireLock(final Lock lock, final Duration duration);
 
     /**
      * This method attempts to acquire the lock and waits for a limited time for the lock to become available.
@@ -80,7 +83,7 @@ public interface ILockable {
      * @param timeout  The timeout(wait duration in seconds) for a lock to become available
      * @throws DLMException with {@link ErrorCode#LOCK_UNAVAILABLE} if lock is not available even after the timeout
      */
-    void acquireLock(final Lock lock, final int duration, final int timeout);
+    void acquireLock(final Lock lock, final Duration duration, final Duration timeout);
 
     /**
      * This method releases the acquired lock, allowing other threads to acquire it.

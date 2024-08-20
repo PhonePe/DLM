@@ -31,6 +31,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -52,11 +53,11 @@ public class AerospikeStore implements ILockStore {
     }
 
     @Override
-    public void write(String lockId, LockLevel lockLevel, String farmId, int ttlSeconds) {
+    public void write(String lockId, LockLevel lockLevel, String farmId, Duration ttlSeconds) {
         final WritePolicy writePolicy = new WritePolicy(aerospikeClient.getWritePolicyDefault());
         writePolicy.generationPolicy = GenerationPolicy.EXPECT_GEN_EQUAL;
         writePolicy.generation = 0;
-        writePolicy.expiration = ttlSeconds;
+        writePolicy.expiration = Long.valueOf(ttlSeconds.getSeconds()).intValue(); // as only int is supported
         writePolicy.commitLevel = CommitLevel.COMMIT_MASTER; // Committing to master only, as there is no read required so there is no chance of dirty reads.
         try {
             final List<Bin> binList = new ArrayList<>();
