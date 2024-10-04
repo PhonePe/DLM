@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.phonepe</groupId>
-    <artifactId>distributed-lock-manager</artifactId>
+    <artifactId>DLM</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
     <url>https://github.com/PhonePe/DLM</url>

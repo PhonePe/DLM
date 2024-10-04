@@ -12,8 +12,8 @@ its MVCC (MultiVersion Concurrency Control) capability.
 ```xml
 <dependency>
   <groupId>com.phonepe</groupId>
-  <artifactId>distributed-lock-manager</artifactId>
-  <version>3.0.6</version>
+  <artifactId>DLM</artifactId>
+  <version>1.0.0</version>
 </dependency>
 ```
 
