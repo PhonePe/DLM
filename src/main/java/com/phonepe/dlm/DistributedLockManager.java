@@ -20,6 +20,9 @@ import com.phonepe.dlm.exception.ErrorCode;
 import com.phonepe.dlm.lock.Lock;
 import com.phonepe.dlm.lock.base.LockBase;
 import com.phonepe.dlm.lock.level.LockLevel;
+
+import java.time.Duration;
+
 import com.phonepe.dlm.exception.DLMException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -56,7 +59,7 @@ public class DistributedLockManager {
      * @param duration The lock duration in seconds for which lock will be held
      * @throws DLMException with {@link ErrorCode#LOCK_UNAVAILABLE} if lock is already acquired
      */
-    public void tryAcquireLock(final Lock lock, final int duration) {
+    public void tryAcquireLock(final Lock lock, final Duration duration) {
         lockBase.tryAcquireLock(lock, duration);
     }
 
@@ -86,7 +89,7 @@ public class DistributedLockManager {
      * @param duration The lock duration in seconds for which lock will be held
      * @throws DLMException with {@link ErrorCode#LOCK_UNAVAILABLE} if lock is not available even after the timeout
      */
-    public void acquireLock(final Lock lock, final int duration) {
+    public void acquireLock(final Lock lock, final Duration duration) {
         lockBase.acquireLock(lock, duration);
     }
 
@@ -101,7 +104,7 @@ public class DistributedLockManager {
      * @param timeout  The timeout(wait duration in seconds) for a lock to become available
      * @throws DLMException with {@link ErrorCode#LOCK_UNAVAILABLE} if lock is not available even after the timeout
      */
-    public void acquireLock(final Lock lock, final int duration, final int timeout) {
+    public void acquireLock(final Lock lock, final Duration duration, final Duration timeout) {
         lockBase.acquireLock(lock, duration, timeout);
     }
 

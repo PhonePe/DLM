@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.time.Duration;
 
 @Data
 @Builder
@@ -70,14 +71,14 @@ public class HBaseStore implements ILockStore {
     }
 
     @Override
-    public void write(String lockId, LockLevel lockLevel, String farmId, int ttlSeconds) {
+    public void write(String lockId, LockLevel lockLevel, String farmId, Duration ttlSeconds) {
         final byte[] normalisedRowKey = getNormalisedRowKey(lockId, lockLevel, farmId);
 
         try (final Table table = getTable()) {
             final boolean result = table.checkAndMutate(normalisedRowKey, COLUMN_FAMILY)
                     .qualifier(COLUMN_NAME)
                     .ifNotExists()
-                    .thenPut(new Put(normalisedRowKey, System.currentTimeMillis()).setTTL(ttlSeconds * 1_000L)
+                    .thenPut(new Put(normalisedRowKey, System.currentTimeMillis()).setTTL(ttlSeconds.getSeconds() * 1_000L)
                             .addColumn(COLUMN_FAMILY, COLUMN_NAME, COLUMN_DATA));
             if (!result) {
                 throw DLMException.builder()

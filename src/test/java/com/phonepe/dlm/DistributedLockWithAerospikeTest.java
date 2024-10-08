@@ -35,6 +35,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -109,7 +110,7 @@ public class DistributedLockWithAerospikeTest {
     @Test
     public void lockTestPositiveXDC() {
         final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.XDC);
-        lockManager.tryAcquireLock(lock, 90);
+        lockManager.tryAcquireLock(lock, Duration.ofSeconds(90));
         Assert.assertTrue(lock.getAcquiredStatus()
                 .get());
 
@@ -127,7 +128,7 @@ public class DistributedLockWithAerospikeTest {
     @Test
     public void testAcquireLockWithWait() {
         final Lock lock = lockManager.getLockInstance("NEW_LOCK_ID", LockLevel.DC);
-        lockManager.acquireLock(lock, 2); // Lock acquired for 1 seconds
+        lockManager.acquireLock(lock, Duration.ofSeconds(2)); // Lock acquired for 2 seconds
         Assert.assertTrue(lock.getAcquiredStatus().get());
 
         try {
@@ -140,7 +141,7 @@ public class DistributedLockWithAerospikeTest {
         Assert.assertTrue(lock.getAcquiredStatus().get());
 
         try {
-            lockManager.acquireLock(lock, 2, 2); // Wait for 2 seconds only for acquiring the lock
+            lockManager.acquireLock(lock, Duration.ofSeconds(2), Duration.ofSeconds(2)); // Wait for 2 seconds only for acquiring the lock
             Assert.fail("Flow should not have reached here");
         } catch (DLMException e) {
             Assert.assertEquals(ErrorCode.LOCK_UNAVAILABLE, e.getErrorCode()); // As it won't be released for next 90 secs default

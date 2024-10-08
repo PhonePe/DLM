@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.phonepe</groupId>
-    <artifactId>distributed-lock-manager</artifactId>
-    <version>3.0.7-SNAPSHOT</version>
+    <artifactId>DLM</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
 
     <url>https://github.com/PhonePe/DLM</url>
     <description>Distributed Lock Manager</description>
@@ -95,7 +95,7 @@
 
         <!-- Test related properties -->
         <mockito.version>4.3.1</mockito.version>
-        <junit.testcontainer.version>1.0.6</junit.testcontainer.version>
+        <junit.testcontainer.version>1.0.14</junit.testcontainer.version>
         <jna.version>5.7.0</jna.version>
         <awaitility.version>4.1.1</awaitility.version>
         <junit.version>4.12</junit.version>
@@ -172,6 +172,12 @@
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
             <version>${awaitility.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.appform.testcontainer</groupId>
+            <artifactId>junit-testcontainer-commons</artifactId>
+            <version>${junit.testcontainer.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -259,33 +265,36 @@
 
     <profiles>
         <profile>
-            <id>coverage</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jacoco</groupId>
-                        <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>${jacoco.maven.plugin.version}</version>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>prepare-agent</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>report</id>
-                                <phase>test</phase>
-                                <goals>
-                                    <goal>report</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
+		  <id>coverage</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<version>${jacoco.maven.plugin.version}</version>
+						<executions>
+							<execution>
+								<id>prepare-agent</id>
+								<goals>
+									<goal>prepare-agent</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>report</id>
+								<goals>
+									<goal>report</goal>
+								</goals>
+								<configuration>
+									<formats>
+										<format>XML</format>
+									</formats>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
         <profile>
 			<id>release</id>
 			<build>

@@ -16,12 +16,14 @@
 
 package com.phonepe.dlm.lock.storage;
 
+import java.time.Duration;
+
 import com.phonepe.dlm.lock.level.LockLevel;
 
 public interface ILockStore {
     void initialize();
 
-    void write(String lockId, LockLevel lockLevel, String farmId, int ttlSeconds);
+    void write(String lockId, LockLevel lockLevel, String farmId, Duration ttlSeconds);
 
     void remove(String lockId, LockLevel lockLevel, String farmId);
 
