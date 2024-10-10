@@ -25,7 +25,7 @@ import com.phonepe.dlm.lock.storage.hbase.HBaseStore;
 import com.phonepe.dlm.util.HBaseConnectionStub;
 import com.phonepe.dlm.exception.DLMException;
 import com.phonepe.dlm.exception.ErrorCode;
-import com.phonepe.dlm.util.DLSExceptionMatcher;
+import com.phonepe.dlm.util.DLMExceptionMatcher;
 import com.phonepe.dlm.util.TestUtils;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
@@ -143,7 +143,7 @@ public class DistributedLockWithHBaseTest {
                                 .build())
                         .build())
                 .build();
-        exceptionThrown.expect(DLSExceptionMatcher.hasCode(ErrorCode.TABLE_CREATION_ERROR));
+        exceptionThrown.expect(DLMExceptionMatcher.hasCode(ErrorCode.TABLE_CREATION_ERROR));
         lockManager.initialize();
     }
 
@@ -202,7 +202,7 @@ public class DistributedLockWithHBaseTest {
                 } catch (DLMException e) {
                     trackers.computeIfAbsent("FAILED_ACQUIRES", x -> new AtomicInteger(0))
                             .getAndIncrement();
-                } catch (Exception e) {
+                } catch (Exception ignored) {
                     // ignore;
                 } finally {
                     boolean result = lockManager.releaseLock(lock);
