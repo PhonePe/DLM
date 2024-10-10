@@ -25,16 +25,16 @@ import org.hamcrest.TypeSafeMatcher;
  * @author shantanu.tiwari
  * Created on 29/12/21
  */
-public class DLSExceptionMatcher extends TypeSafeMatcher<DLMException> {
+public class DLMExceptionMatcher extends TypeSafeMatcher<DLMException> {
     private final ErrorCode expectedErrorCode;
     private ErrorCode foundErrorCode;
 
-    private DLSExceptionMatcher(ErrorCode expectedErrorCode) {
+    private DLMExceptionMatcher(ErrorCode expectedErrorCode) {
         this.expectedErrorCode = expectedErrorCode;
     }
 
-    public static DLSExceptionMatcher hasCode(ErrorCode errorCode) {
-        return new DLSExceptionMatcher(errorCode);
+    public static DLMExceptionMatcher hasCode(ErrorCode errorCode) {
+        return new DLMExceptionMatcher(errorCode);
     }
 
     @Override

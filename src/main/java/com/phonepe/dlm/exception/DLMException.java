@@ -21,6 +21,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import java.util.Objects;
+
 @Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
@@ -44,10 +46,10 @@ public class DLMException extends RuntimeException {
     }
 
     public static DLMException propagate(final String message, final Throwable throwable) {
-        if (throwable instanceof DLMException) {
-            return (DLMException) throwable;
-        } else if (throwable.getCause() instanceof DLMException) {
-            return (DLMException) throwable.getCause();
+        if (throwable instanceof DLMException exception) {
+            return exception;
+        } else if (throwable.getCause() instanceof DLMException causeException) {
+            return causeException;
         }
         return DLMException.builder()
                 .errorCode(ErrorCode.INTERNAL_ERROR)
