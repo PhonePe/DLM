@@ -20,20 +20,19 @@ import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.Host;
 import com.aerospike.client.policy.ClientPolicy;
 import com.google.common.collect.Maps;
+import com.phonepe.dlm.exception.DLMException;
+import com.phonepe.dlm.exception.ErrorCode;
 import com.phonepe.dlm.lock.Lock;
 import com.phonepe.dlm.lock.base.LockBase;
 import com.phonepe.dlm.lock.level.LockLevel;
 import com.phonepe.dlm.lock.mode.LockMode;
 import com.phonepe.dlm.lock.storage.aerospike.AerospikeStore;
+import com.phonepe.dlm.util.DLMExceptionMatcher;
 import com.phonepe.dlm.util.TestUtils;
-import com.phonepe.dlm.exception.DLMException;
-import com.phonepe.dlm.exception.ErrorCode;
 import io.appform.testcontainers.aerospike.AerospikeContainerConfiguration;
 import io.appform.testcontainers.aerospike.container.AerospikeContainer;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
+import org.junit.rules.ExpectedException;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -54,6 +53,8 @@ public class DistributedLockWithAerospikeTest {
     public static final int AEROSPIKE_PORT = 3000;
     private static final AerospikeContainer AEROSPIKE_DOCKER_CONTAINER;
 
+    @Rule
+    public ExpectedException exceptionThrown = ExpectedException.none();
     private DistributedLockManager lockManager;
     public AerospikeClient aerospikeClient;
 
@@ -68,7 +69,8 @@ public class DistributedLockWithAerospikeTest {
     @Before
     public void setUp() {
         aerospikeClient = new AerospikeClient(new ClientPolicy(),
-                new Host(AEROSPIKE_DOCKER_CONTAINER.getContainerIpAddress(), AEROSPIKE_DOCKER_CONTAINER.getConnectionPort()));
+                new Host(AEROSPIKE_DOCKER_CONTAINER.getHost(), AEROSPIKE_DOCKER_CONTAINER.getConnectionPort()));
+        aerospikeClient.truncate(aerospikeClient.getInfoPolicyDefault(), AEROSPIKE_NAMESPACE, null, null);
 
         lockManager = DistributedLockManager.builder()
                 .clientId("CLIENT_ID")
@@ -126,59 +128,37 @@ public class DistributedLockWithAerospikeTest {
     }
 
     @Test
-    public void testAcquireLockWithWait() {
+    public void testLockUnavailableForAcquireLock() {
         final Lock lock = lockManager.getLockInstance("NEW_LOCK_ID", LockLevel.DC);
-        lockManager.acquireLock(lock, Duration.ofSeconds(2)); // Lock acquired for 2 seconds
-        Assert.assertTrue(lock.getAcquiredStatus().get());
-
-        try {
-            lockManager.tryAcquireLock(lock); // Try acquiring a lock and fail if lock is already acquired
-        } catch (DLMException e) {
-            Assert.assertEquals(ErrorCode.LOCK_UNAVAILABLE, e.getErrorCode());
-        }
-
         lockManager.acquireLock(lock); // Wait and try acquiring the lock.
-        Assert.assertTrue(lock.getAcquiredStatus().get());
 
-        try {
-            lockManager.acquireLock(lock, Duration.ofSeconds(2), Duration.ofSeconds(2)); // Wait for 2 seconds only for acquiring the lock
-            Assert.fail("Flow should not have reached here");
-        } catch (DLMException e) {
-            Assert.assertEquals(ErrorCode.LOCK_UNAVAILABLE, e.getErrorCode()); // As it won't be released for next 90 secs default
-        }
+        exceptionThrown.expect(DLMExceptionMatcher.hasCode(ErrorCode.LOCK_UNAVAILABLE));
+        lockManager.acquireLock(lock, Duration.ofSeconds(2), Duration.ofSeconds(2)); // Wait for 2 seconds only for acquiring the lock
     }
 
-    @Test(expected = DLMException.class)
-    public void lockTestNegative1() {
+    @Test
+    public void testLockUnavailableForTryAcquireLockWithSameLockInstance() {
         final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.tryAcquireLock(lock);
-        Assert.assertTrue(lock.getAcquiredStatus()
-                .get());
+        Assert.assertTrue(lock.getAcquiredStatus().get());
+
+        exceptionThrown.expect(DLMExceptionMatcher.hasCode(ErrorCode.LOCK_UNAVAILABLE));
         lockManager.tryAcquireLock(lock);
     }
 
-    @Test(expected = DLMException.class)
-    public void lockTestNegative2() {
+    @Test
+    public void testLockUnavailableForTryAcquireLockWithDifferentLockInstance() {
         Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.tryAcquireLock(lock);
-        Assert.assertTrue(lock.getAcquiredStatus()
-                .get());
+        Assert.assertTrue(lock.getAcquiredStatus().get());
+
+        exceptionThrown.expect(DLMExceptionMatcher.hasCode(ErrorCode.LOCK_UNAVAILABLE));
         lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.tryAcquireLock(lock);
     }
 
-    @Test(expected = DLMException.class)
-    public void lockTestNegative3() {
-        final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
-        lockManager.tryAcquireLock(lock);
-        Assert.assertTrue(lock.getAcquiredStatus()
-                .get());
-        final Lock lock1 = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
-        lockManager.tryAcquireLock(lock1);
-    }
-
     @Test
-    public void concurrentLockAttempt() throws InterruptedException {
+    public void concurrentLockAttempt() {
         final int attempts = Runtime.getRuntime()
                 .availableProcessors();
         final Map<String, AtomicInteger> trackers = Maps.newConcurrentMap();
