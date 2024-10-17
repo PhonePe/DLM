@@ -48,7 +48,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class DistributedLockWithAerospikeTest {
     public static final String AEROSPIKE_HOST = "localhost";
-    public static final String AEROSPIKE_DOCKER_IMAGE = "aerospike/aerospike-server:latest";
+    public static final String AEROSPIKE_DOCKER_IMAGE = "aerospike/aerospike-server:6.4.0.23";
     public static final String AEROSPIKE_NAMESPACE = "DLM";
     public static final int AEROSPIKE_PORT = 3000;
     private static final AerospikeContainer AEROSPIKE_DOCKER_CONTAINER;

@@ -1,5 +1,7 @@
 # Distributed Lock Manager (DLM)
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_DLM&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=PhonePe_DLM)
+
 Locking is a very common expectation in SoA, where a vulnerable entity needs to be protected for a certain duration.
 And the definition of vulnerable entity changes from one client to another depending on the use-cases at hand.
 
