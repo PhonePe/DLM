@@ -57,7 +57,7 @@ public class AerospikeStore implements ILockStore {
         final WritePolicy writePolicy = new WritePolicy(aerospikeClient.getWritePolicyDefault());
         writePolicy.generationPolicy = GenerationPolicy.EXPECT_GEN_EQUAL;
         writePolicy.generation = 0;
-        writePolicy.expiration = Long.valueOf(ttlSeconds.getSeconds()).intValue(); // as only int is supported
+        writePolicy.expiration = (int) ttlSeconds.getSeconds(); // as only int is supported
         writePolicy.commitLevel = CommitLevel.COMMIT_MASTER; // Committing to master only, as there is no read required so there is no chance of dirty reads.
         try {
             final List<Bin> binList = new ArrayList<>();
