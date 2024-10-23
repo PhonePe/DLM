@@ -84,6 +84,7 @@
         <sonatype.central.publishing.maven.plugin.version>0.5.0</sonatype.central.publishing.maven.plugin.version>
         <maven.release.plugin.version>2.5.3</maven.release.plugin.version>
         <maven.gpg.plugin.version>1.6</maven.gpg.plugin.version>
+        <maven.sonar.plugin.version>3.9.1.2184</maven.sonar.plugin.version>
 
         <!-- Test related properties -->
         <mockito.version>4.3.1</mockito.version>
@@ -97,14 +98,20 @@
         <jdk.target.version>17</jdk.target.version>
         <jdk.release.version>17</jdk.release.version>
 
+        <!-- Sonar properties -->
         <sonar.projectKey>PhonePe_DLM</sonar.projectKey>
         <sonar.organization>phonepe</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-
+        <sonar.sources>src/main</sonar.sources>
+        <sonar.tests>src/test</sonar.tests>
+        <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+        <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+        <sonar.language>java</sonar.language>
+        <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
         <sonar.exclusions>
             <!-- Excluding test classes from sonar smells -->
-            **/src/test/com/phonepe/dlm/**/*.java,
-            **/src/test/com/phonepe/dlm/*.java
+            **/src/test/java/com/phonepe/dlm/**/*.java,
+            **/src/test/java/com/phonepe/dlm/*.java
         </sonar.exclusions>
     </properties>
 
@@ -250,9 +257,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven.surefire.plugin.version}</version>
-                <configuration>
-                    <argLine>--add-opens java.base/java.nio=ALL-UNNAMED</argLine>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.sonatype.central</groupId>
@@ -276,24 +280,46 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${maven.sonar.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>sonar-run</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sonar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.maven.plugin.version}</version>
                 <executions>
                     <execution>
-                        <id>prepare-agent</id>
+                        <phase>initialize</phase>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
+                        <configuration>
+                            <append>true</append>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>report</id>
-                        <phase>test</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <excludes>
+                        <exclude>**/src/test/**</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>
