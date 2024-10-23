@@ -58,7 +58,6 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.TimeRange;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
 import org.apache.hadoop.hbase.util.Bytes;
 
 
@@ -71,8 +70,8 @@ public class HBaseTableStub implements Table {
             Bytes.BYTES_COMPARATOR);
 
     private static List<Cell> toCell(byte[] row,
-            NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowdata,
-            int maxVersions) {
+                                     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowdata,
+                                     int maxVersions) {
         return toCell(row, rowdata, 0, Long.MAX_VALUE, maxVersions);
     }
 
@@ -150,10 +149,10 @@ public class HBaseTableStub implements Table {
     }
 
     private static List<Cell> toCell(byte[] row,
-            NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowdata,
-            long timestampStart,
-            long timestampEnd,
-            int maxVersions) {
+                                     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowdata,
+                                     long timestampStart,
+                                     long timestampEnd,
+                                     int maxVersions) {
         List<Cell> ret = new ArrayList<>();
         byte putType = KeyValue.Type.Put.getCode();
         for (byte[] family : rowdata.keySet())
@@ -188,7 +187,7 @@ public class HBaseTableStub implements Table {
     }
 
     @Override
-    public boolean[] exists(List<Get> list) throws IOException {
+    public boolean[] exists(List<Get> list) {
         return new boolean[0];
     }
 
@@ -202,14 +201,14 @@ public class HBaseTableStub implements Table {
     }
 
     @Override
-    public void batch(List<? extends Row> list, Object[] objects) throws IOException, InterruptedException {
-
+    public void batch(List<? extends Row> list, Object[] objects) {
+        // Not implemented
     }
 
     /**
      * {@inheritDoc}
      */
-    public void batch(List<? extends Row> actions) throws IOException {
+    public void batch(List<? extends Row> actions) {
         batch(actions);
     }
 
@@ -419,14 +418,6 @@ public class HBaseTableStub implements Table {
                     }
                 }
             }
-//            skip filter implementation
-//            if (filter != null) {
-//                kvs = filter(filter, kvs);
-//                // Check for early out optimization
-//                if (filter.filterAllRemaining()) {
-//                    break;
-//                }
-//            }
             if (!kvs.isEmpty()) {
                 kvs.sort(new CellComparator() {
                     @Override
@@ -492,10 +483,12 @@ public class HBaseTableStub implements Table {
         return new ResultScanner() {
             private final Iterator<Result> iterator = ret.iterator();
 
+            @Override
             public Iterator<Result> iterator() {
                 return iterator;
             }
 
+            @Override
             public Result[] next(int nbRows) {
                 ArrayList<Result> resultSets = new ArrayList<>(nbRows);
                 for (int i = 0; i < nbRows; i++) {
@@ -509,6 +502,7 @@ public class HBaseTableStub implements Table {
                 return resultSets.toArray(new Result[0]);
             }
 
+            @Override
             public Result next() {
                 try {
                     return iterator().next();
@@ -611,9 +605,6 @@ public class HBaseTableStub implements Table {
                 new TreeMap<>(Bytes.BYTES_COMPARATOR));
         for (byte[] family : put.getFamilyCellMap()
                 .keySet()) {
-//            if (!columnFamilies.contains(new String(family))) {
-//                throw new RuntimeException("Not Exists columnFamily : " + new String(family));
-//            }
             NavigableMap<byte[], NavigableMap<Long, byte[]>> familyData = forceFind(rowData,
                     family,
                     new TreeMap<>(Bytes.BYTES_COMPARATOR));
@@ -675,21 +666,21 @@ public class HBaseTableStub implements Table {
 
     @Override
     public boolean checkAndPut(byte[] row,
-            byte[] family,
-            byte[] qualifier,
-            CompareFilter.CompareOp compareOp,
-            byte[] value,
-            Put put) {
+                               byte[] family,
+                               byte[] qualifier,
+                               CompareFilter.CompareOp compareOp,
+                               byte[] value,
+                               Put put) {
         return false;
     }
 
     @Override
     public boolean checkAndPut(byte[] bytes,
-            byte[] bytes1,
-            byte[] bytes2,
-            CompareOperator compareOperator,
-            byte[] bytes3,
-            Put put) throws IOException {
+                               byte[] bytes1,
+                               byte[] bytes2,
+                               CompareOperator compareOperator,
+                               byte[] bytes3,
+                               Put put) throws IOException {
         return false;
     }
 
@@ -756,24 +747,23 @@ public class HBaseTableStub implements Table {
         return false;
     }
 
-    // TODO: Implement?
     @Override
     public boolean checkAndDelete(byte[] row,
-            byte[] family,
-            byte[] qualifier,
-            CompareFilter.CompareOp compareOp,
-            byte[] value,
-            Delete delete) {
+                                  byte[] family,
+                                  byte[] qualifier,
+                                  CompareFilter.CompareOp compareOp,
+                                  byte[] value,
+                                  Delete delete) {
         throw new RuntimeException(this.getClass() + " does NOT implement this method.");
     }
 
     @Override
     public boolean checkAndDelete(byte[] bytes,
-            byte[] bytes1,
-            byte[] bytes2,
-            CompareOperator compareOperator,
-            byte[] bytes3,
-            Delete delete) throws IOException {
+                                  byte[] bytes1,
+                                  byte[] bytes2,
+                                  CompareOperator compareOperator,
+                                  byte[] bytes3,
+                                  Delete delete) throws IOException {
         return false;
     }
 
@@ -783,31 +773,26 @@ public class HBaseTableStub implements Table {
 
             @Override
             public CheckAndMutateBuilder ifMatches(CompareOperator arg0, byte[] arg1) {
-                // TODO Auto-generated method stub
                 return this;
             }
 
             @Override
             public CheckAndMutateBuilder ifNotExists() {
-                // TODO Auto-generated method stub
                 return this;
             }
 
             @Override
             public CheckAndMutateBuilder qualifier(byte[] arg0) {
-                // TODO Auto-generated method stub
                 return this;
             }
 
             @Override
             public boolean thenDelete(Delete arg0) throws IOException {
-                // TODO Auto-generated method stub
                 return false;
             }
 
             @Override
             public boolean thenMutate(RowMutations arg0) throws IOException {
-                // TODO Auto-generated method stub
                 return false;
             }
 
@@ -822,7 +807,6 @@ public class HBaseTableStub implements Table {
 
             @Override
             public CheckAndMutateBuilder timeRange(TimeRange arg0) {
-                // TODO Auto-generated method stub
                 return this;
             }
         };
@@ -861,7 +845,6 @@ public class HBaseTableStub implements Table {
         return Result.create(cells);
     }
 
-    // TODO: Implement?
     /**
      * {@inheritDoc}
      */
@@ -903,8 +886,7 @@ public class HBaseTableStub implements Table {
             Class<T> aClass,
             byte[] bytes,
             byte[] bytes1,
-            Batch.Call<T, R> call) throws ServiceException,
-            Throwable {
+            Batch.Call<T, R> call) {
         return null;
     }
 
@@ -914,9 +896,8 @@ public class HBaseTableStub implements Table {
             byte[] bytes,
             byte[] bytes1,
             Batch.Call<T, R> call,
-            Batch.Callback<R> callback) throws ServiceException,
-            Throwable {
-
+            Batch.Callback<R> callback) {
+        // Not implemented
     }
 
     @Override
@@ -925,8 +906,7 @@ public class HBaseTableStub implements Table {
             org.apache.hadoop.hbase.shaded.com.google.protobuf.Message message,
             byte[] bytes,
             byte[] bytes1,
-            R r) throws ServiceException,
-            Throwable {
+            R r) {
         return null;
     }
 
@@ -937,55 +917,27 @@ public class HBaseTableStub implements Table {
             byte[] bytes,
             byte[] bytes1,
             R r,
-            Batch.Callback<R> callback) throws ServiceException,
-            Throwable {
+            Batch.Callback<R> callback) {
 
     }
 
-    /**
-     * {@inheritDoc}
-     */
-//    @Override
-//    public long getWriteBufferSize() {
-//        throw new RuntimeException(this.getClass() + " does NOT implement this method.");
-//    }
-
-    /**
-     * {@inheritDoc}
-     */
-//    @Override
-//    public void setWriteBufferSize(long writeBufferSize) {
-//        throw new RuntimeException(this.getClass() + " does NOT implement this method.");
-//    }
-//
-//    @Override
-//    public <R extends Message> Map<byte[], R> batchCoprocessorService(Descriptors.MethodDescriptor methodDescriptor, Message request, byte[] startKey, byte[] endKey, R responsePrototype) {
-//        throw new RuntimeException(this.getClass() + " does NOT implement this method.");
-//    }
-//
-//    @Override
-//    public <R extends Message> void batchCoprocessorService(Descriptors.MethodDescriptor methodDescriptor, Message request, byte[] startKey, byte[] endKey, R responsePrototype, Batch.Callback<R> callback) {
-//        throw new RuntimeException(this.getClass() + " does NOT implement this method.");
-//    }
-
-    // TODO: Implement?
     @Override
     public boolean checkAndMutate(byte[] row,
-            byte[] family,
-            byte[] qualifier,
-            CompareFilter.CompareOp compareOp,
-            byte[] value,
-            RowMutations mutation) {
+                                  byte[] family,
+                                  byte[] qualifier,
+                                  CompareFilter.CompareOp compareOp,
+                                  byte[] value,
+                                  RowMutations mutation) {
         throw new RuntimeException(this.getClass() + " does NOT implement this method.");
     }
 
     @Override
     public boolean checkAndMutate(byte[] bytes,
-            byte[] bytes1,
-            byte[] bytes2,
-            CompareOperator compareOperator,
-            byte[] bytes3,
-            RowMutations rowMutations) throws IOException {
+                                  byte[] bytes1,
+                                  byte[] bytes2,
+                                  CompareOperator compareOperator,
+                                  byte[] bytes3,
+                                  RowMutations rowMutations) {
         return false;
     }
 
@@ -1021,7 +973,7 @@ public class HBaseTableStub implements Table {
 
     @Override
     public void setReadRpcTimeout(int i) {
-
+        // Not implemented
     }
 
     @Override
@@ -1036,7 +988,7 @@ public class HBaseTableStub implements Table {
 
     @Override
     public void setWriteRpcTimeout(int i) {
-
+        // Not implemented
     }
 
     @Override
@@ -1132,7 +1084,7 @@ public class HBaseTableStub implements Table {
      * @return <code>{"family", "qualifier"}</code>
      */
     private static String[] split(String column) {
-        return new String[] { column.substring(0, column.indexOf(':')), column.substring(column.indexOf(':') + 1) };
+        return new String[]{column.substring(0, column.indexOf(':')), column.substring(column.indexOf(':') + 1)};
     }
 
     /**

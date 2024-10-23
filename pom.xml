@@ -109,9 +109,7 @@
         <sonar.language>java</sonar.language>
         <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
         <sonar.exclusions>
-            <!-- Excluding test classes from sonar smells -->
-            **/src/test/java/com/phonepe/dlm/**/*.java,
-            **/src/test/java/com/phonepe/dlm/*.java
+            **/src/test/java/com/phonepe/dlm/util/HBaseTableStub.java
         </sonar.exclusions>
     </properties>
 
@@ -317,7 +315,7 @@
                 </executions>
                 <configuration>
                     <excludes>
-                        <exclude>**/src/test/**</exclude>
+                        <exclude>**/src/test/java/com/phonepe/dlm/util/HBaseTableStub.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>

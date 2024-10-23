@@ -30,11 +30,6 @@ public class DLMException extends RuntimeException {
     private static final long serialVersionUID = 7310153558992797589L;
     private final ErrorCode errorCode;
 
-    public DLMException(ErrorCode errorCode) {
-        super();
-        this.errorCode = errorCode;
-    }
-
     @Builder
     public DLMException(ErrorCode errorCode, String message, Throwable cause) {
         super(message, cause);

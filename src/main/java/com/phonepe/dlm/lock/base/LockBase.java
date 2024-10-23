@@ -26,7 +26,6 @@ import com.phonepe.dlm.utils.Timer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -64,7 +63,6 @@ public class LockBase implements ILockable {
         acquireLock(lock, duration, DEFAULT_WAIT_FOR_LOCK_IN_SECONDS);
     }
 
-    @SneakyThrows
     @Override
     public void acquireLock(final Lock lock, final Duration duration, final Duration timeout) {
         final Timer timer = new Timer(System.currentTimeMillis(), timeout.getSeconds());
@@ -79,13 +77,14 @@ public class LockBase implements ILockable {
                     throw e;
                 }
                 if (e.getErrorCode() == ErrorCode.LOCK_UNAVAILABLE) {
-                    Thread.sleep(WAIT_TIME_FOR_NEXT_RETRY);
+                    sleep();
                     continue;
                 }
                 throw e;
             }
         } while (!success.get());
     }
+
 
     @Override
     public boolean releaseLock(final Lock lock) {
@@ -100,5 +99,15 @@ public class LockBase implements ILockable {
     private void writeToStore(final Lock lock, final Duration ttlSeconds) {
         lockStore.write(lock.getLockId(), lock.getLockLevel(), lock.getFarmId(), ttlSeconds);
         lock.getAcquiredStatus().compareAndSet(false, true);
+    }
+
+    private static void sleep() {
+        try {
+            Thread.sleep(WAIT_TIME_FOR_NEXT_RETRY);
+        } catch (InterruptedException e) {
+            log.error("Error sleeping the thread", e);
+            Thread.currentThread().interrupt();
+            throw DLMException.propagate(e);
+        }
     }
 }

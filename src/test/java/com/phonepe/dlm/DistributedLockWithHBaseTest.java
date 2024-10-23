@@ -17,16 +17,17 @@
 package com.phonepe.dlm;
 
 import com.google.common.collect.Maps;
+import com.phonepe.dlm.exception.DLMException;
+import com.phonepe.dlm.exception.ErrorCode;
 import com.phonepe.dlm.lock.Lock;
 import com.phonepe.dlm.lock.base.LockBase;
 import com.phonepe.dlm.lock.level.LockLevel;
 import com.phonepe.dlm.lock.mode.LockMode;
 import com.phonepe.dlm.lock.storage.hbase.HBaseStore;
-import com.phonepe.dlm.util.HBaseConnectionStub;
-import com.phonepe.dlm.exception.DLMException;
-import com.phonepe.dlm.exception.ErrorCode;
 import com.phonepe.dlm.util.DLMExceptionMatcher;
+import com.phonepe.dlm.util.HBaseConnectionStub;
 import com.phonepe.dlm.util.TestUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
@@ -41,6 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 
+@Slf4j
 @RunWith(MockitoJUnitRunner.class)
 public class DistributedLockWithHBaseTest {
     @Rule
@@ -101,28 +103,32 @@ public class DistributedLockWithHBaseTest {
         Assert.assertFalse(released);
     }
 
-    @Test(expected = DLMException.class)
+    @Test
     public void lockTestNegative1() {
         final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.tryAcquireLock(lock);
         Assert.assertTrue(lock.getAcquiredStatus().get());
+
+        exceptionThrown.expect(DLMExceptionMatcher.hasCode(ErrorCode.LOCK_UNAVAILABLE));
         lockManager.tryAcquireLock(lock);
     }
 
-    @Test(expected = DLMException.class)
+    @Test
     public void lockTestNegative2() {
         Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.tryAcquireLock(lock);
-        Assert.assertTrue(lock.getAcquiredStatus().get());
+
+        exceptionThrown.expect(DLMExceptionMatcher.hasCode(ErrorCode.LOCK_UNAVAILABLE));
         lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.tryAcquireLock(lock);
     }
 
-    @Test(expected = DLMException.class)
+    @Test
     public void lockTestNegative3() {
         final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.tryAcquireLock(lock);
-        Assert.assertTrue(lock.getAcquiredStatus().get());
+
+        exceptionThrown.expect(DLMExceptionMatcher.hasCode(ErrorCode.LOCK_UNAVAILABLE));
         final Lock lock1 = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.tryAcquireLock(lock1);
     }
@@ -202,8 +208,8 @@ public class DistributedLockWithHBaseTest {
                 } catch (DLMException e) {
                     trackers.computeIfAbsent("FAILED_ACQUIRES", x -> new AtomicInteger(0))
                             .getAndIncrement();
-                } catch (Exception ignored) {
-                    // ignore;
+                } catch (Exception e) {
+                    log.warn("Gracefully ignoring exception", e);
                 } finally {
                     boolean result = lockManager.releaseLock(lock);
                     if (result) {
@@ -223,8 +229,8 @@ public class DistributedLockWithHBaseTest {
                         if (counter.decrementAndGet() <= 1) {
                             latch.countDown();
                         }
-                    } catch (InterruptedException | ExecutionException e1) {
-                        // ignore;
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.warn("Gracefully ignoring exception", e);
                     }
                 });
 
