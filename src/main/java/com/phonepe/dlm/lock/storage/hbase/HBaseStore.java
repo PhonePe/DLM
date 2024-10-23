@@ -92,6 +92,8 @@ public class HBaseStore implements ILockStore {
                     .errorCode(ErrorCode.CONNECTION_ERROR)
                     .message(String.format("Error writing lock in HBase [id = %s]", lockId))
                     .build();
+        } catch (Exception e) {
+            throw DLMException.propagate(e);
         }
     }
 
