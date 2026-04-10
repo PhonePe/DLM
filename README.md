@@ -145,7 +145,7 @@ By default, every `LockBase` uses the library's built-in timing constants:
 |-----------|---------|-------------|
 | `lockTtl` | 90 s | How long the lock is held before the storage layer expires it automatically |
 | `waitForLock` | 90 s | Maximum time a blocking `acquireLock` call waits for a contended lock |
-| `retryInterval` | 1000 ms | Sleep interval between successive acquisition attempts |
+| `sleepBetweenRetries` | 1000 ms | Sleep interval between successive acquisition attempts |
 
 To customise these values supply a `LockConfiguration` to the `LockBase` builder using standard `Duration` values. Any value left unset falls back to the library default.
 
@@ -154,7 +154,7 @@ To customise these values supply a `LockConfiguration` to the `LockBase` builder
 LockConfiguration config = LockConfiguration.builder()
         .lockTtl(Duration.ofSeconds(30))      // hold locks for 30 s
         .waitForLock(Duration.ofSeconds(10))  // wait at most 10 s for a contended lock
-        .retryInterval(Duration.ofMillis(500)) // retry every 500 ms
+        .sleepBetweenRetries(Duration.ofMillis(500)) // retry every 500 ms
         .build();
 
 DistributedLockManager lockManager = DistributedLockManager.builder()
