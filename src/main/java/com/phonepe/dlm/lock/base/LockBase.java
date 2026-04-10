@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * is provided the library falls back to {@link LockConfiguration}'s built-in defaults
  * ({@link LockConfiguration#DEFAULT_LOCK_TTL},
  * {@link LockConfiguration#DEFAULT_WAIT_FOR_LOCK},
- * {@link LockConfiguration#DEFAULT_RETRY_INTERVAL}), preserving full backward
+ * {@link LockConfiguration#DEFAULT_SLEEP_BETWEEN_RETRIES}), preserving full backward
  * compatibility.
  *
  * <h2>Typical construction</h2>
@@ -58,7 +58,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *         .lockConfiguration(LockConfiguration.builder()
  *         .lockTtl(Duration.ofSeconds(30))
  *         .waitForLock(Duration.ofSeconds(10))
- *         .retryInterval(Duration.ofMillis(500))
+ *         .sleepBetweenRetries(Duration.ofMillis(500))
  *         .build())
  *         .build();
  * }</pre>
@@ -125,7 +125,7 @@ public class LockBase implements ILockable {
                     throw e;
                 }
                 if (e.getErrorCode() == ErrorCode.LOCK_UNAVAILABLE) {
-                    sleep(lockConfiguration.getRetryInterval());
+                    sleep(lockConfiguration.getSleepBetweenRetries());
                     continue;
                 }
                 throw e;
@@ -151,13 +151,13 @@ public class LockBase implements ILockable {
     /**
      * Sleeps for the configured retry interval before the next acquisition attempt.
      *
-     * @param retryInterval the duration to sleep
+     * @param sleepBetweenRetries the duration to sleep
      * @throws DLMException wrapping {@link InterruptedException} if the thread is interrupted
      *                      while sleeping, with the interrupt status restored on the current thread
      */
-    private static void sleep(final Duration retryInterval) {
+    private static void sleep(final Duration sleepBetweenRetries) {
         try {
-            Thread.sleep(retryInterval.toMillis());
+            Thread.sleep(sleepBetweenRetries.toMillis());
         } catch (InterruptedException e) {
             log.error("Error sleeping the thread", e);
             Thread.currentThread().interrupt();

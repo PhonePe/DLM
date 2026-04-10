@@ -35,7 +35,7 @@ import java.time.Duration;
  *       storage layer expires it automatically.</li>
  *   <li><b>waitForLock</b> ({@link #DEFAULT_WAIT_FOR_LOCK}) — maximum time a caller blocks
  *       waiting for a contended lock.</li>
- *   <li><b>retryInterval</b> ({@link #DEFAULT_RETRY_INTERVAL}) — polling interval between
+ *   <li><b>sleepBetweenRetries</b> ({@link #DEFAULT_SLEEP_BETWEEN_RETRIES}) — polling interval between
  *       successive acquisition attempts when a lock is unavailable.</li>
  * </ul>
  *
@@ -48,7 +48,7 @@ import java.time.Duration;
  * LockConfiguration custom = LockConfiguration.builder()
  *         .lockTtl(Duration.ofSeconds(30))
  *         .waitForLock(Duration.ofSeconds(10))
- *         .retryInterval(Duration.ofMillis(500))
+ *         .sleepBetweenRetries(Duration.ofMillis(500))
  *         .build();
  *
  * DistributedLockManager lockManager = DistributedLockManager.builder()
@@ -94,7 +94,7 @@ public final class LockConfiguration {
      * Tuning this value trades off CPU/network overhead against acquisition latency under
      * contention.
      */
-    public static final Duration DEFAULT_RETRY_INTERVAL = Duration.ofMillis(1_000);
+    public static final Duration DEFAULT_SLEEP_BETWEEN_RETRIES = Duration.ofMillis(1_000);
 
     /**
      * The duration for which a successfully acquired lock is held before automatic expiry.
@@ -112,5 +112,5 @@ public final class LockConfiguration {
      * The sleep duration between successive acquisition attempts when a lock is unavailable.
      */
     @Builder.Default
-    private final Duration retryInterval = DEFAULT_RETRY_INTERVAL;
+    private final Duration sleepBetweenRetries = DEFAULT_SLEEP_BETWEEN_RETRIES;
 }

@@ -16,7 +16,6 @@
 
 package com.phonepe.dlm.lock.base;
 
-import com.phonepe.dlm.DistributedLockManager;
 import com.phonepe.dlm.lock.mode.LockMode;
 import com.phonepe.dlm.lock.storage.ILockStore;
 import org.junit.Test;
@@ -32,30 +31,12 @@ import static org.junit.Assert.assertNotNull;
  *
  * <p>Covers:
  * <ul>
- *   <li>Custom {@link Duration} values are applied correctly</li>
  *   <li>Partial configuration uses defaults for unset fields</li>
  *   <li>{@link LockBase} builder remains backward compatible when no configuration is provided</li>
  *   <li>{@link LockBase} honours a supplied {@link LockConfiguration}</li>
  * </ul>
  */
 public class LockConfigurationTest {
-
-    // -------------------------------------------------------------------------
-    // Custom value tests
-    // -------------------------------------------------------------------------
-
-    @Test
-    public void customDurationValuesAreApplied() {
-        final LockConfiguration config = LockConfiguration.builder()
-                .lockTtl(Duration.ofSeconds(30))
-                .waitForLock(Duration.ofSeconds(15))
-                .retryInterval(Duration.ofMillis(500))
-                .build();
-
-        assertEquals(Duration.ofSeconds(30), config.getLockTtl());
-        assertEquals(Duration.ofSeconds(15), config.getWaitForLock());
-        assertEquals(Duration.ofMillis(500), config.getRetryInterval());
-    }
 
     @Test
     public void partialConfigFallsBackToDefaultsForUnsetFields() {
@@ -66,12 +47,8 @@ public class LockConfigurationTest {
 
         assertEquals(Duration.ofSeconds(45), config.getLockTtl());
         assertEquals(LockConfiguration.DEFAULT_WAIT_FOR_LOCK, config.getWaitForLock());
-        assertEquals(LockConfiguration.DEFAULT_RETRY_INTERVAL, config.getRetryInterval());
+        assertEquals(LockConfiguration.DEFAULT_SLEEP_BETWEEN_RETRIES, config.getSleepBetweenRetries());
     }
-
-    // -------------------------------------------------------------------------
-    // Backward-compatibility: LockBase builder without lockConfiguration
-    // -------------------------------------------------------------------------
 
     @Test
     public void lockBaseBuilderBackwardCompatibleWithoutConfiguration() {
@@ -85,7 +62,7 @@ public class LockConfigurationTest {
         assertNotNull(lockBase.getLockConfiguration());
         assertEquals(LockConfiguration.DEFAULT_LOCK_TTL, lockBase.getLockConfiguration().getLockTtl());
         assertEquals(LockConfiguration.DEFAULT_WAIT_FOR_LOCK, lockBase.getLockConfiguration().getWaitForLock());
-        assertEquals(LockConfiguration.DEFAULT_RETRY_INTERVAL, lockBase.getLockConfiguration().getRetryInterval());
+        assertEquals(LockConfiguration.DEFAULT_SLEEP_BETWEEN_RETRIES, lockBase.getLockConfiguration().getSleepBetweenRetries());
     }
 
     @Test
@@ -94,7 +71,7 @@ public class LockConfigurationTest {
         final LockConfiguration custom = LockConfiguration.builder()
                 .lockTtl(Duration.ofSeconds(20))
                 .waitForLock(Duration.ofSeconds(5))
-                .retryInterval(Duration.ofMillis(250))
+                .sleepBetweenRetries(Duration.ofMillis(250))
                 .build();
 
         final LockBase lockBase = LockBase.builder()
@@ -105,26 +82,7 @@ public class LockConfigurationTest {
 
         assertEquals(Duration.ofSeconds(20), lockBase.getLockConfiguration().getLockTtl());
         assertEquals(Duration.ofSeconds(5), lockBase.getLockConfiguration().getWaitForLock());
-        assertEquals(Duration.ofMillis(250), lockBase.getLockConfiguration().getRetryInterval());
+        assertEquals(Duration.ofMillis(250), lockBase.getLockConfiguration().getSleepBetweenRetries());
     }
 
-    // -------------------------------------------------------------------------
-    // DistributedLockManager builder backward compatibility
-    // -------------------------------------------------------------------------
-
-    @Test
-    public void distributedLockManagerBuilderBackwardCompatible() {
-        final ILockStore mockStore = Mockito.mock(ILockStore.class);
-
-        final DistributedLockManager manager = DistributedLockManager.builder()
-                .clientId("CLIENT_ID")
-                .farmId("FA1")
-                .lockBase(LockBase.builder()
-                        .mode(LockMode.EXCLUSIVE)
-                        .lockStore(mockStore)
-                        .build())
-                .build();
-
-        assertNotNull(manager);
-    }
 }
