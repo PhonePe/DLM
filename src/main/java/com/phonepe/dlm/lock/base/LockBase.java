@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Core implementation of the distributed locking contract defined by {@link ILockable}.
  *
  * <p>{@code LockBase} orchestrates lock acquisition and release by delegating storage operations
- * to the configured {@link ILockStore}. Timing behaviour — TTL, wait timeout, and retry interval —
+ * to the configured {@link ILockStore}. Timing behaviour — TTL, wait timeout, and sleep between retries —
  * is governed by the {@link LockConfiguration} supplied at construction time. When no configuration
  * is provided the library falls back to {@link LockConfiguration}'s built-in defaults
  * ({@link LockConfiguration#DEFAULT_LOCK_TTL},
@@ -149,7 +149,7 @@ public class LockBase implements ILockable {
     }
 
     /**
-     * Sleeps for the configured retry interval before the next acquisition attempt.
+     * Sleeps for the configured sleepBetweenRetries before the next acquisition attempt.
      *
      * @param sleepBetweenRetries the duration to sleep
      * @throws DLMException wrapping {@link InterruptedException} if the thread is interrupted
