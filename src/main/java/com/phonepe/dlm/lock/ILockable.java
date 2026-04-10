@@ -31,7 +31,7 @@ public interface ILockable {
      * It does not wait if the lock is currently held by another thread.
      * <p>
      * The lock will be acquired for the TTL configured via
-     * {@link LockConfiguration#getLockTtl}, defaulting to
+     * {@link LockConfiguration} (field: {@code lockTtl}), defaulting to
      * {@link LockConfiguration#DEFAULT_LOCK_TTL} seconds.
      *
      * @param lock The lock to be acquired.

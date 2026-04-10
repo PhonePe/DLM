@@ -56,10 +56,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *         .mode(LockMode.EXCLUSIVE)
  *         .lockStore(aerospikeStore)
  *         .lockConfiguration(LockConfiguration.builder()
- *                 .lockTtlSeconds(30)
- *                 .waitForLockSeconds(10)
- *                 .retryIntervalMillis(500L)
- *                 .build())
+ *         .lockTtl(Duration.ofSeconds(30))
+ *         .waitForLock(Duration.ofSeconds(10))
+ *         .retryInterval(Duration.ofMillis(500))
+ *         .build())
  *         .build();
  * }</pre>
  *
@@ -143,8 +143,8 @@ public class LockBase implements ILockable {
         return false;
     }
 
-    private void writeToStore(final Lock lock, final Duration ttl) {
-        lockStore.write(lock.getLockId(), lock.getLockLevel(), lock.getFarmId(), ttl);
+    private void writeToStore(final Lock lock, final Duration ttlSeconds) {
+        lockStore.write(lock.getLockId(), lock.getLockLevel(), lock.getFarmId(), ttlSeconds);
         lock.getAcquiredStatus().compareAndSet(false, true);
     }
 

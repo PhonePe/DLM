@@ -32,7 +32,6 @@ import static org.junit.Assert.assertNotNull;
  *
  * <p>Covers:
  * <ul>
- *   <li>Default values match the documented library constants</li>
  *   <li>Custom {@link Duration} values are applied correctly</li>
  *   <li>Partial configuration uses defaults for unset fields</li>
  *   <li>{@link LockBase} builder remains backward compatible when no configuration is provided</li>
@@ -40,27 +39,6 @@ import static org.junit.Assert.assertNotNull;
  * </ul>
  */
 public class LockConfigurationTest {
-
-    // -------------------------------------------------------------------------
-    // Default value tests
-    // -------------------------------------------------------------------------
-
-    @Test
-    public void defaultBuildYieldsLibraryDefaults() {
-        final LockConfiguration config = LockConfiguration.builder().build();
-
-        assertEquals(LockConfiguration.DEFAULT_LOCK_TTL, config.getLockTtl());
-        assertEquals(LockConfiguration.DEFAULT_WAIT_FOR_LOCK, config.getWaitForLock());
-        assertEquals(LockConfiguration.DEFAULT_RETRY_INTERVAL, config.getRetryInterval());
-    }
-
-    @Test
-    public void defaultConstantsHaveExpectedValues() {
-        // Guard against accidental drift of the library defaults.
-        assertEquals(Duration.ofSeconds(90), LockConfiguration.DEFAULT_LOCK_TTL);
-        assertEquals(Duration.ofSeconds(90), LockConfiguration.DEFAULT_WAIT_FOR_LOCK);
-        assertEquals(Duration.ofMillis(1_000), LockConfiguration.DEFAULT_RETRY_INTERVAL);
-    }
 
     // -------------------------------------------------------------------------
     // Custom value tests

@@ -53,7 +53,7 @@ import java.time.Duration;
  *
  * DistributedLockManager lockManager = DistributedLockManager.builder()
  *         .clientId("MY_SERVICE")
- *         .farmId("FA1")
+ *         .farmId("MHX")
  *         .lockBase(LockBase.builder()
  *                 .mode(LockMode.EXCLUSIVE)
  *                 .lockConfiguration(custom)
