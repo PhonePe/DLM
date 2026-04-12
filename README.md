@@ -26,13 +26,13 @@ its MVCC (MultiVersion Concurrency Control) capability.
 
 ##### With Aerospike as lock base
 
-``` java
+```java
 DistributedLockManager lockManager = DistributedLockManager.builder()
                 .clientId("CLIENT_ID")
                 .farmId("FA1")
-                .lockBase(AerospikeLockBase.builder()
+                .lockBase(LockBase.builder()
                         .mode(LockMode.EXCLUSIVE)
-                        .store(AerospikeStore.builder()
+                        .lockStore(AerospikeStore.builder()
                                 .aerospikeClient(aerospikeClient)
                                 .namespace("NAMESPACE")
                                 .setSuffix("distributed_lock")
@@ -44,13 +44,13 @@ lockManager.initialize();
 
 ##### With HBase as lock base
 
-``` java
+```java
 DistributedLockManager lockManager = DistributedLockManager.builder()
                 .clientId("CLIENT_ID")
                 .farmId("FA1")
-                .lockBase(HBaseLockBase.builder()
+                .lockBase(LockBase.builder()
                         .mode(LockMode.EXCLUSIVE)
-                        .store(HBaseStore.builder()
+                        .lockStore(HBaseStore.builder()
                                 .connection(connection) // HBase connection reference
                                 .tableName("table_name")
                                 .build())
@@ -88,38 +88,45 @@ This library offers various methods for acquiring and releasing locks on critica
 final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
 try {
     lockManager.tryAcquireLock(lock); // Attempts to acquire the lock for the default duration of 90 seconds
-    // OR lockManager.tryAcquireLock(lock, 120); // Tries to acquire the lock for 120 seconds
+    // OR lockManager.tryAcquireLock(lock, Duration.ofSeconds(120)); // Tries to acquire the lock for 120 seconds
 
     // Perform actions once the lock is successfully acquired.
 
-} catch (DLSException e) {
-    if (ErrorCode.LOCK_UNAVAILABLE.equals(e.getErrorCode)) {
+} catch (DLMException e) {
+    if (ErrorCode.LOCK_UNAVAILABLE.equals(e.getErrorCode())) {
         // Actions to take if the lock can't be acquired.
     }
 } finally {
     // Verify if the lock was released successfully.
-    boolean released = lockManager.release(lock);
+    boolean released = lockManager.releaseLock(lock);
 }
 ```
 
 ```java
-// Vulnerable entity represented by LOCK_ID
 // Representing a vulnerable entity by LOCK_ID
 final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
 try {
     lockManager.acquireLock(lock); // Attempts to acquire the lock for the default duration of 90 seconds and waits for 90 seconds
-    // OR lockManager.acquireLock(lock, 30); // Tries to acquire the lock for 30 seconds, waiting for 90 seconds
-    // OR lockManager.acquireLock(lock, 30, 30); // Tries to acquire the lock for 30 seconds, waiting for 30 seconds
+    // OR lockManager.acquireLock(lock, Duration.ofSeconds(30)); // Tries to acquire the lock for 30 seconds, waiting for 90 seconds
+    // OR lockManager.acquireLock(lock, Duration.ofSeconds(30), Duration.ofSeconds(30)); // Tries to acquire the lock for 30 seconds, waiting for 30 seconds
 
     // Perform actions once the lock is successfully acquired.
-} catch (DLSException e) {
-    if (ErrorCode.LOCK_UNAVAILABLE.equals(e.getErrorCode)) {
+} catch (DLMException e) {
+    if (ErrorCode.LOCK_UNAVAILABLE.equals(e.getErrorCode())) {
         // Actions to take if the lock can't be acquired.
     }
 } finally {
     // Verify if the lock was released successfully.
-    boolean released = lockManager.release(lock);
+    boolean released = lockManager.releaseLock(lock);
 }
+```
+
+#### Cleanup
+
+When the application shuts down, call `destroy()` to close the underlying store connection:
+
+```java
+lockManager.destroy();
 ```
 
 #### Lock Levels
@@ -134,3 +141,22 @@ For XDC locks requiring strong consistency, opt for a multi-site Aerospike clust
 #### Notes
 
 A lock exists only within the scope of a Client represented by `CLIENT_ID`.
+
+## Documentation Site (Zensical)
+
+This repository now includes Zensical-based docs under `docs/`.
+
+- Config: `docs/zensical.toml`
+- Content: `docs/docs/`
+- Python dependencies: `docs/requirements.txt`
+- GitHub Pages workflow: `.github/workflows/docs.yml`
+
+Build docs locally:
+
+```bash
+cd docs
+pip install -r requirements.txt
+zensical build --clean
+```
+
+Generated site output is available at `docs/site`.

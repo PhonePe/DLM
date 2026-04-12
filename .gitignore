@@ -45,3 +45,6 @@ benchmarking/target/
 *.iml
 
 /bin/
+
+# Zensical docs build output
+docs/site/
