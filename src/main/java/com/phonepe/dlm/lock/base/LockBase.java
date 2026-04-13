@@ -31,21 +31,69 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Core implementation of the distributed locking contract defined by {@link ILockable}.
+ *
+ * <p>{@code LockBase} orchestrates lock acquisition and release by delegating storage operations
+ * to the configured {@link ILockStore}. Timing behaviour — TTL, wait timeout, and sleep between retries —
+ * is governed by the {@link LockConfiguration} supplied at construction time. When no configuration
+ * is provided the library falls back to {@link LockConfiguration}'s built-in defaults
+ * ({@link LockConfiguration#DEFAULT_LOCK_TTL},
+ * {@link LockConfiguration#DEFAULT_WAIT_FOR_LOCK},
+ * {@link LockConfiguration#DEFAULT_SLEEP_BETWEEN_RETRIES}), preserving full backward
+ * compatibility.
+ *
+ * <h2>Typical construction</h2>
+ * <pre>{@code
+ * // Backward-compatible: omitting lockConfiguration uses library defaults.
+ * LockBase lockBase = LockBase.builder()
+ *         .mode(LockMode.EXCLUSIVE)
+ *         .lockStore(aerospikeStore)
+ *         .build();
+ *
+ * // Custom timing for a service with tighter SLOs.
+ * LockBase lockBase = LockBase.builder()
+ *         .mode(LockMode.EXCLUSIVE)
+ *         .lockStore(aerospikeStore)
+ *         .lockConfiguration(LockConfiguration.builder()
+ *         .lockTtl(Duration.ofSeconds(30))
+ *         .waitForLock(Duration.ofSeconds(10))
+ *         .sleepBetweenRetries(Duration.ofMillis(500))
+ *         .build())
+ *         .build();
+ * }</pre>
+ *
+ * <p>This class is thread-safe provided the supplied {@link ILockStore} is also thread-safe.
+ */
 @Slf4j
-@AllArgsConstructor
-@Builder
 @Getter
+@Builder
+@AllArgsConstructor
 public class LockBase implements ILockable {
-    public static final Duration DEFAULT_LOCK_TTL_SECONDS = Duration.ofSeconds(90);
-    public static final Duration DEFAULT_WAIT_FOR_LOCK_IN_SECONDS = Duration.ofSeconds(90);
-    public static final int WAIT_TIME_FOR_NEXT_RETRY = 1000; // 1 second
 
+    /**
+     * The storage backend used to persist and remove lock records.
+     */
     private final ILockStore lockStore;
-    private final LockMode mode; // Not implemented now, but can be leveraged in the future.
+
+    /**
+     * The locking mode (e.g. {@link LockMode#EXCLUSIVE}).
+     * Not actively enforced today but reserved for future multi-mode support.
+     */
+    private final LockMode mode;
+
+    /**
+     * Timing configuration for this lock base instance.
+     * <p>
+     * When not set via the builder, defaults to {@link LockConfiguration#builder() build()},
+     * which applies the library-standard defaults (90 s TTL, 90 s wait, 1 000 ms retry).
+     */
+    @Builder.Default
+    private final LockConfiguration lockConfiguration = LockConfiguration.builder().build();
 
     @Override
     public void tryAcquireLock(final Lock lock) {
-        tryAcquireLock(lock, DEFAULT_LOCK_TTL_SECONDS);
+        tryAcquireLock(lock, lockConfiguration.getLockTtl());
     }
 
     @Override
@@ -55,12 +103,12 @@ public class LockBase implements ILockable {
 
     @Override
     public void acquireLock(final Lock lock) {
-        acquireLock(lock, DEFAULT_LOCK_TTL_SECONDS, DEFAULT_WAIT_FOR_LOCK_IN_SECONDS);
+        acquireLock(lock, lockConfiguration.getLockTtl(), lockConfiguration.getWaitForLock());
     }
 
     @Override
     public void acquireLock(final Lock lock, final Duration duration) {
-        acquireLock(lock, duration, DEFAULT_WAIT_FOR_LOCK_IN_SECONDS);
+        acquireLock(lock, duration, lockConfiguration.getWaitForLock());
     }
 
     @Override
@@ -77,14 +125,13 @@ public class LockBase implements ILockable {
                     throw e;
                 }
                 if (e.getErrorCode() == ErrorCode.LOCK_UNAVAILABLE) {
-                    sleep();
+                    sleep(lockConfiguration.getSleepBetweenRetries());
                     continue;
                 }
                 throw e;
             }
         } while (!success.get());
     }
-
 
     @Override
     public boolean releaseLock(final Lock lock) {
@@ -101,9 +148,16 @@ public class LockBase implements ILockable {
         lock.getAcquiredStatus().compareAndSet(false, true);
     }
 
-    private static void sleep() {
+    /**
+     * Sleeps for the configured sleepBetweenRetries before the next acquisition attempt.
+     *
+     * @param sleepBetweenRetries the duration to sleep
+     * @throws DLMException wrapping {@link InterruptedException} if the thread is interrupted
+     *                      while sleeping, with the interrupt status restored on the current thread
+     */
+    private static void sleep(final Duration sleepBetweenRetries) {
         try {
-            Thread.sleep(WAIT_TIME_FOR_NEXT_RETRY);
+            Thread.sleep(sleepBetweenRetries.toMillis());
         } catch (InterruptedException e) {
             log.error("Error sleeping the thread", e);
             Thread.currentThread().interrupt();

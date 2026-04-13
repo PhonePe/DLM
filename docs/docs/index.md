@@ -13,6 +13,7 @@ In service-oriented architectures, concurrent access to shared resources is inev
 - **Pluggable storage backends** — Aerospike and HBase out of the box.
 - **Blocking and non-blocking acquisition** — choose between immediate-fail (`tryAcquireLock`) or wait-with-timeout (`acquireLock`).
 - **Automatic TTL** — every lock has a time-to-live; the lock expires even if the holder crashes.
+- **Configurable lock timing** — tune TTL, wait timeout, and retry interval per `LockBase` via `LockConfiguration`.
 - **Built-in retry** — configurable retry with backoff on transient storage failures.
 
 ## How it works

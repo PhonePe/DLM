@@ -47,9 +47,99 @@
     lockManager.initialize();
     ```
 
+=== "With custom lock timing"
+
+    ```java
+    LockConfiguration config = LockConfiguration.builder()
+        .lockTtl(Duration.ofSeconds(30))
+        .waitForLock(Duration.ofSeconds(10))
+        .sleepBetweenRetries(Duration.ofMillis(500))
+        .build();
+
+    DistributedLockManager lockManager = DistributedLockManager.builder()
+        .clientId("CLIENT_ID")
+        .farmId("FA1")
+        .lockBase(LockBase.builder()
+            .mode(LockMode.EXCLUSIVE)
+            .lockConfiguration(config)
+            .lockStore(AerospikeStore.builder()
+                .aerospikeClient(aerospikeClient)
+                .namespace("NAMESPACE")
+                .setSuffix("distributed_lock")
+                .build())
+            .build())
+        .build();
+
+    lockManager.initialize();
+    ```
+
 !!! warning
     Always call `lockManager.initialize()` before any lock operations.
     For HBase, this creates the table if it does not exist.
+
+## Configuring lock timing
+
+By default, `LockBase` uses the library's built-in timing constants from `LockConfiguration`. You can override any or all of them by supplying a custom `LockConfiguration` to the `LockBase` builder.
+
+### `LockConfiguration` parameters
+
+| Parameter             | Type       | Default    | Description |
+|-----------------------|------------|------------|-------------|
+| `lockTtl`             | `Duration` | 90 seconds | How long the lock is held before the storage layer expires it automatically. |
+| `waitForLock`         | `Duration` | 90 seconds | Maximum time a blocking `acquireLock` call waits for a contended lock. |
+| `sleepBetweenRetries` | `Duration` | 1000 ms    | Sleep interval between successive acquisition attempts when a lock is unavailable. |
+
+### Default configuration
+
+Omitting `lockConfiguration(...)` from the builder is fully supported — `LockBase` internally creates a default `LockConfiguration` with all defaults applied:
+
+```java
+// These two are equivalent:
+LockBase.builder().mode(LockMode.EXCLUSIVE).lockStore(store).build();
+LockBase.builder().mode(LockMode.EXCLUSIVE).lockStore(store)
+    .lockConfiguration(LockConfiguration.builder().build())  // all defaults
+    .build();
+```
+
+### Custom configuration examples
+
+=== "Tight SLO service"
+
+    ```java
+    LockConfiguration config = LockConfiguration.builder()
+        .lockTtl(Duration.ofSeconds(30))           // short-lived locks
+        .waitForLock(Duration.ofSeconds(10))        // fail fast on contention
+        .sleepBetweenRetries(Duration.ofMillis(500)) // poll twice as fast
+        .build();
+    ```
+
+=== "Long-running batch job"
+
+    ```java
+    LockConfiguration config = LockConfiguration.builder()
+        .lockTtl(Duration.ofMinutes(10))           // hold lock for batch duration
+        .waitForLock(Duration.ofMinutes(5))         // willing to wait longer
+        .sleepBetweenRetries(Duration.ofSeconds(5)) // poll less frequently
+        .build();
+    ```
+
+=== "Override only TTL"
+
+    ```java
+    // waitForLock and sleepBetweenRetries keep their defaults (90s and 1000ms)
+    LockConfiguration config = LockConfiguration.builder()
+        .lockTtl(Duration.ofSeconds(60))
+        .build();
+    ```
+
+!!! info "How timing flows through the API"
+    When you call `acquireLock(lock)` without explicit duration/timeout arguments, the values are read from `LockConfiguration`:
+
+    - `tryAcquireLock(lock)` → uses `lockConfiguration.getLockTtl()` as TTL.
+    - `acquireLock(lock)` → uses `lockConfiguration.getLockTtl()` as TTL and `lockConfiguration.getWaitForLock()` as timeout.
+    - `acquireLock(lock, duration)` → uses the explicit `duration` but `lockConfiguration.getWaitForLock()` as timeout.
+    - `acquireLock(lock, duration, timeout)` → uses both explicit values; config is not consulted.
+    - Retry sleep always uses `lockConfiguration.getSleepBetweenRetries()`.
 
 ## Get a lock instance
 
@@ -98,11 +188,14 @@ lockManager.acquireLock(lock, Duration.ofSeconds(30), Duration.ofSeconds(10));
 ```
 
 !!! note "Default values"
-    | Constant                         | Default  |
-    |----------------------------------|----------|
-    | `DEFAULT_LOCK_TTL_SECONDS`       | 90 seconds |
-    | `DEFAULT_WAIT_FOR_LOCK_IN_SECONDS` | 90 seconds |
-    | `WAIT_TIME_FOR_NEXT_RETRY`       | 1 second |
+    These defaults come from `LockConfiguration` and can be overridden per `LockBase` instance.
+    See [Configuring lock timing](#configuring-lock-timing) for details.
+
+    | Constant                       | Default    |
+    |--------------------------------|------------|
+    | `DEFAULT_LOCK_TTL`             | 90 seconds |
+    | `DEFAULT_WAIT_FOR_LOCK`        | 90 seconds |
+    | `DEFAULT_SLEEP_BETWEEN_RETRIES`| 1000 ms    |
 
 ## Releasing locks
 

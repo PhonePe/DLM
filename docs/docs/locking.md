@@ -42,7 +42,7 @@ The `LockMode` parameter is accepted by the builder for forward compatibility. F
 
 | Signature | Description |
 |-----------|-------------|
-| `tryAcquireLock(Lock lock)` | Acquire with default TTL (**90s**). Throws immediately if unavailable. |
+| `tryAcquireLock(Lock lock)` | Acquire with TTL from `LockConfiguration.lockTtl` (default **90s**). Throws immediately if unavailable. |
 | `tryAcquireLock(Lock lock, Duration duration)` | Acquire with custom TTL. Throws immediately if unavailable. |
 
 Both methods perform a **single** write attempt. If the lock is held, they throw `DLMException` with `ErrorCode.LOCK_UNAVAILABLE` without retrying.
@@ -51,21 +51,22 @@ Both methods perform a **single** write attempt. If the lock is held, they throw
 
 | Signature | Description |
 |-----------|-------------|
-| `acquireLock(Lock lock)` | Default TTL (**90s**), default timeout (**90s**). |
-| `acquireLock(Lock lock, Duration duration)` | Custom TTL, default timeout (**90s**). |
+| `acquireLock(Lock lock)` | TTL from `lockConfiguration.lockTtl`, timeout from `lockConfiguration.waitForLock`. |
+| `acquireLock(Lock lock, Duration duration)` | Custom TTL, timeout from `lockConfiguration.waitForLock`. |
 | `acquireLock(Lock lock, Duration duration, Duration timeout)` | Custom TTL and custom timeout. |
 
-These methods enter a **retry loop**:
+These methods enter a **retry loop**. The sleep interval between retries is always read from `lockConfiguration.sleepBetweenRetries`:
 
 ```mermaid
 flowchart TD
     A[acquireLock called] --> B[Try write to store]
     B -->|Success| C[Lock acquired ✓]
-    B -->|LOCK_UNAVAILABLE| D{Timeout expired?}
-    D -->|No| E[Sleep 1 second]
+    B -->|DLMException| D{Timeout expired?}
+    D -->|Yes| F[Throw DLMException]
+    D -->|No| H{LOCK_UNAVAILABLE?}
+    H -->|Yes| E["Sleep (sleepBetweenRetries)"]
     E --> B
-    D -->|Yes| F[Throw DLMException LOCK_UNAVAILABLE]
-    B -->|Other error| G[Throw DLMException immediately]
+    H -->|No| G[Throw DLMException immediately]
 ```
 
 ### `releaseLock`
@@ -89,11 +90,13 @@ Creates a `Lock` with `lockId` set to `clientId#order-123`. No I/O is performed.
 
 ## Defaults
 
+All timing defaults are defined in `LockConfiguration` and can be overridden per `LockBase` instance. See [Configuring lock timing](usage.md#configuring-lock-timing).
+
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `DEFAULT_LOCK_TTL_SECONDS` | `Duration.ofSeconds(90)` | How long the lock record lives in the store before auto-expiring. |
-| `DEFAULT_WAIT_FOR_LOCK_IN_SECONDS` | `Duration.ofSeconds(90)` | Maximum time `acquireLock` will retry before giving up. |
-| `WAIT_TIME_FOR_NEXT_RETRY` | `1000 ms` | Sleep interval between retry attempts inside `acquireLock`. |
+| `DEFAULT_LOCK_TTL` | `Duration.ofSeconds(90)` | How long the lock record lives in the store before auto-expiring. |
+| `DEFAULT_WAIT_FOR_LOCK` | `Duration.ofSeconds(90)` | Maximum time `acquireLock` will retry before giving up. |
+| `DEFAULT_SLEEP_BETWEEN_RETRIES` | `Duration.ofMillis(1000)` | Sleep interval between retry attempts inside `acquireLock`. |
 
 ## Error codes
 

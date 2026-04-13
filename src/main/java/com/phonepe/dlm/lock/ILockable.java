@@ -17,7 +17,8 @@
 package com.phonepe.dlm.lock;
 
 import com.phonepe.dlm.exception.ErrorCode;
-import com.phonepe.dlm.lock.base.LockBase;
+
+import com.phonepe.dlm.lock.base.LockConfiguration;
 
 import java.time.Duration;
 
@@ -29,7 +30,9 @@ public interface ILockable {
      * This method attempts to acquire the lock immediately and throws exception if lock is unavailable
      * It does not wait if the lock is currently held by another thread.
      * <p>
-     * The lock will be acquired for default time period {@link LockBase#DEFAULT_LOCK_TTL_SECONDS}
+     * The lock will be acquired for the TTL configured via
+     * {@link LockConfiguration} (field: {@code lockTtl}), defaulting to
+     * {@link LockConfiguration#DEFAULT_LOCK_TTL} seconds.
      *
      * @param lock The lock to be acquired.
      * @throws DLMException with {@link ErrorCode#LOCK_UNAVAILABLE} if lock is already acquired
@@ -51,8 +54,9 @@ public interface ILockable {
      * it will wait until the lock becomes available.
      * It blocks the thread until the lock is acquired.
      * <p>
-     * By default, timeout is {@link LockBase#DEFAULT_WAIT_FOR_LOCK_IN_SECONDS}
-     * The lock will be acquired for default time period {@link LockBase#DEFAULT_LOCK_TTL_SECONDS}
+     * By default, timeout is {@link com.phonepe.dlm.lock.base.LockConfiguration#DEFAULT_WAIT_FOR_LOCK} seconds,
+     * and TTL is {@link com.phonepe.dlm.lock.base.LockConfiguration#DEFAULT_LOCK_TTL} seconds.
+     * Override both via {@link com.phonepe.dlm.lock.base.LockConfiguration}.
      *
      * @param lock The lock to be acquired.
      * @throws DLMException with {@link ErrorCode#LOCK_UNAVAILABLE} if lock is not available even after the timeout
@@ -64,7 +68,8 @@ public interface ILockable {
      * it will wait until the lock becomes available.
      * It blocks the thread until the lock is acquired.
      * <p>
-     * By default, timeout is {@link LockBase#DEFAULT_WAIT_FOR_LOCK_IN_SECONDS}
+     * By default, timeout is {@link com.phonepe.dlm.lock.base.LockConfiguration#DEFAULT_WAIT_FOR_LOCK} seconds.
+     * Override via {@link com.phonepe.dlm.lock.base.LockConfiguration}.
      *
      * @param lock     The lock to be acquired.
      * @param duration The lock duration in seconds for which lock will be held

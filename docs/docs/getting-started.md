@@ -13,11 +13,11 @@
 <dependency>
   <groupId>com.phonepe</groupId>
   <artifactId>DLM</artifactId>
-  <version>1.0.1</version>
+  <version>${dlm.version}</version>
 </dependency>
 ```
 
-If you are consuming DLM in another project, choose the version published for your environment.
+Replace `${dlm.version}` with the latest version from [Maven Central](https://central.sonatype.com/artifact/com.phonepe/DLM) or [GitHub Releases](https://github.com/PhonePe/DLM/releases).
 
 ## Build locally
 
@@ -70,8 +70,13 @@ try {
 lockManager.destroy();
 ```
 
+!!! tip
+    The example above uses all default timing values (90s TTL, 90s wait, 1s retry).
+    To customise these, pass a `LockConfiguration` to the `LockBase` builder.
+    See [Configuring lock timing](usage.md#configuring-lock-timing).
+
 ## What's next
 
-- [Usage](usage.md) — all initialization options, API overloads, error handling.
+- [Usage](usage.md) — initialization, lock timing configuration, API overloads, error handling.
 - [Locking Semantics](locking.md) — defaults, retry behavior, lock levels.
 - [Storage Backends](storages/aerospike.md) — Aerospike and HBase details.
