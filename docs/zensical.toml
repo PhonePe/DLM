@@ -1,0 +1,85 @@
+[project]
+site_name = "Distributed Lock Manager (DLM)"
+site_url = "https://phonepe.github.io/DLM"
+repo_url = "https://github.com/PhonePe/DLM"
+copyright = "Copyright &copy; 2024-2026 PhonePe India Pvt. Ltd."
+
+nav = [
+  {"Home" = "index.md"},
+  {"Getting Started" = "getting-started.md"},
+  {"Usage" = "usage.md"},
+  {"Locking Semantics" = "locking.md"},
+  {"Storage Backends" = [
+    {"Aerospike" = "storages/aerospike.md"},
+    {"HBase" = "storages/hbase.md"}
+  ]}
+]
+
+[project.theme]
+features = [
+  "navigation.tracking",
+  "navigation.path",
+  "navigation.tabs",
+  "navigation.tabs.sticky",
+  "navigation.expand",
+  "navigation.top",
+  "toc.follow",
+  "content.code.copy",
+  "content.code.annotate",
+  "search.suggest",
+  "search.highlight",
+  "search.share"
+]
+
+[[project.theme.palette]]
+media  = "(prefers-color-scheme: light)"
+scheme = "default"
+
+[project.theme.palette.toggle]
+icon = "material/brightness-7"
+name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media  = "(prefers-color-scheme)"
+
+[project.theme.palette.toggle]
+icon = "material/brightness-auto"
+name = "Switch to light mode"
+
+[[project.theme.palette]]
+media  = "(prefers-color-scheme: dark)"
+scheme = "slate"
+
+[project.theme.palette.toggle]
+icon = "material/brightness-4"
+name = "Switch to system preference"
+
+[project.plugins.glightbox]
+
+[project.plugins.awesome-pages]
+
+[project.markdown_extensions.toc]
+permalink = true
+
+[project.markdown_extensions.attr_list]
+
+[project.markdown_extensions.md_in_html]
+
+[project.markdown_extensions.admonition]
+
+[project.markdown_extensions.tables]
+
+[project.markdown_extensions."pymdownx.details"]
+
+[project.markdown_extensions."pymdownx.superfences"]
+custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" }
+]
+
+[project.markdown_extensions."pymdownx.tabbed"]
+alternate_style = true
+
+[project.markdown_extensions."pymdownx.emoji"]
+emoji_index     = "zensical.extensions.emoji.twemoji"
+emoji_generator = "zensical.extensions.emoji.to_svg"
+
