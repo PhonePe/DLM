@@ -134,3 +134,44 @@ For XDC locks requiring strong consistency, opt for a multi-site Aerospike clust
 #### Notes
 
 A lock exists only within the scope of a Client represented by `CLIENT_ID`.
+
+---
+
+## Configuring Lock Timing
+
+By default, every `LockBase` uses the library's built-in timing constants:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `lockTtl` | 90 s | How long the lock is held before the storage layer expires it automatically |
+| `waitForLock` | 90 s | Maximum time a blocking `acquireLock` call waits for a contended lock |
+| `sleepBetweenRetries` | 1000 ms | Sleep interval between successive acquisition attempts |
+
+To customise these values supply a `LockConfiguration` to the `LockBase` builder using standard `Duration` values. Any value left unset falls back to the library default.
+
+```java
+// Tight SLO service: short TTL, short wait, fast retry
+LockConfiguration config = LockConfiguration.builder()
+        .lockTtl(Duration.ofSeconds(30))      // hold locks for 30 s
+        .waitForLock(Duration.ofSeconds(10))  // wait at most 10 s for a contended lock
+        .sleepBetweenRetries(Duration.ofMillis(500)) // retry every 500 ms
+        .build();
+
+DistributedLockManager lockManager = DistributedLockManager.builder()
+        .clientId("CLIENT_ID")
+        .farmId("FA1")
+        .lockBase(LockBase.builder()
+                .mode(LockMode.EXCLUSIVE)
+                .lockConfiguration(config)          // <-- inject custom config
+                .lockStore(AerospikeStore.builder()
+                        .aerospikeClient(aerospikeClient)
+                        .namespace("NAMESPACE")
+                        .setSuffix("distributed_lock")
+                        .build())
+                .build())
+        .build();
+lockManager.initialize();
+```
+
+> **Backward compatibility**: omitting `lockConfiguration(...)` from the builder is fully supported
+> and produces identical behaviour to all previous library versions.
