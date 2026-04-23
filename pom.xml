@@ -8,7 +8,7 @@
     <name>Distributed Lock Manager</name>
 
     <url>https://github.com/PhonePe/DLM</url>
-    <description>Distributed Lock Manager - A Java library for distributed locking across different storage backends like Aerospike and HBase</description>
+    <description>Distributed Lock Manager - Lightweight Java library for coordinating lock acquisition and release across distributed application instances</description>
     <inceptionYear>2024</inceptionYear>
 
     <scm>
