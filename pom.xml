@@ -5,9 +5,10 @@
     <groupId>com.phonepe</groupId>
     <artifactId>DLM</artifactId>
     <version>1.0.2-SNAPSHOT</version>
+    <name>Distributed Lock Manager</name>
 
     <url>https://github.com/PhonePe/DLM</url>
-    <description>Distributed Lock Manager</description>
+    <description>Distributed Lock Manager - A Java library for distributed locking across different storage backends like Aerospike and HBase</description>
     <inceptionYear>2024</inceptionYear>
 
     <scm>
