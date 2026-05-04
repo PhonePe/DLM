@@ -1,6 +1,15 @@
 # Distributed Lock Manager (DLM)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_DLM&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=PhonePe_DLM)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_DLM&metric=coverage)](https://sonarcloud.io/summary/new_code?id=PhonePe_DLM)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_DLM&metric=bugs)](https://sonarcloud.io/summary/new_code?id=PhonePe_DLM)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_DLM&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=PhonePe_DLM)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_DLM&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=PhonePe_DLM)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_DLM&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=PhonePe_DLM)
+[![Duplicated Lines](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_DLM&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=PhonePe_DLM)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_DLM&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=PhonePe_DLM)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_DLM&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=PhonePe_DLM)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_DLM&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=PhonePe_DLM)
 
 Locking is a very common expectation in SoA, where a vulnerable entity needs to be protected for a certain duration.
 And the definition of vulnerable entity changes from one client to another depending on the use-cases at hand.
@@ -185,21 +194,12 @@ lockManager.initialize();
 > **Backward compatibility**: omitting `lockConfiguration(...)` from the builder is fully supported
 > and produces identical behaviour to all previous library versions.
 
-## Documentation Site (Zensical)
+## Documentation
 
-This repository now includes Zensical-based docs under `docs/`.
+Detailed documentation is available at **https://phonepe.github.io/DLM/**
 
-- Config: `docs/zensical.toml`
-- Content: `docs/docs/`
-- Python dependencies: `docs/requirements.txt`
-- GitHub Pages workflow: `.github/workflows/docs.yml`
-
-Build docs locally:
-
-```bash
-cd docs
-pip install -r requirements.txt
-zensical build --clean
-```
-
-Generated site output is available at `docs/site`.
+- [Getting Started](https://phonepe.github.io/DLM/getting-started/)
+- [Usage Guide](https://phonepe.github.io/DLM/usage/)
+- [Locking Semantics](https://phonepe.github.io/DLM/locking/)
+- [Aerospike Backend](https://phonepe.github.io/DLM/storages/aerospike/)
+- [HBase Backend](https://phonepe.github.io/DLM/storages/hbase/)

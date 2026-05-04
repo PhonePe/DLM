@@ -109,6 +109,7 @@
         <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
         <sonar.language>java</sonar.language>
         <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.exclusions>
             **/src/test/java/com/phonepe/dlm/util/HBaseTableStub.java
         </sonar.exclusions>
