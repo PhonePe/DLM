@@ -9,15 +9,29 @@
 
 ## Add dependency
 
-```xml
-<dependency>
-  <groupId>com.phonepe</groupId>
-  <artifactId>DLM</artifactId>
-  <version>${dlm.version}</version>
-</dependency>
-```
+Choose the module for the storage backend used by your application. The selected module includes `dlm-core` transitively and does not include dependencies from the other backend.
 
-Replace `${dlm.version}` with the latest version from [Maven Central](https://central.sonatype.com/artifact/com.phonepe/DLM) or [GitHub Releases](https://github.com/PhonePe/DLM/releases).
+=== "Aerospike"
+
+    ```xml
+    <dependency>
+      <groupId>com.phonepe</groupId>
+      <artifactId>dlm-aerospike</artifactId>
+      <version>${dlm.version}</version>
+    </dependency>
+    ```
+
+=== "HBase"
+
+    ```xml
+    <dependency>
+      <groupId>com.phonepe</groupId>
+      <artifactId>dlm-hbase</artifactId>
+      <version>${dlm.version}</version>
+    </dependency>
+    ```
+
+Use `dlm-core` directly only when implementing a custom `ILockStore`. Replace `${dlm.version}` with the latest version from [Maven Central](https://central.sonatype.com/namespace/com.phonepe) or [GitHub Releases](https://github.com/PhonePe/DLM/releases).
 
 ## Build locally
 

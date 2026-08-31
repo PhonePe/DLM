@@ -2,6 +2,16 @@
 
 Use `HBaseStore` when your platform standard is Apache HBase and you need lock operations backed by HBase's atomic `checkAndMutate`.
 
+## Dependency
+
+```xml
+<dependency>
+  <groupId>com.phonepe</groupId>
+  <artifactId>dlm-hbase</artifactId>
+  <version>${dlm.version}</version>
+</dependency>
+```
+
 ## Configuration
 
 ```java

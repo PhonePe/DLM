@@ -36,6 +36,7 @@ crashlytics-build.properties
 ## Directory-based project format:
 /.idea/
 /target/
+**/target/
 benchmarking/.idea/
 benchmarking/target/
 .classpath
@@ -48,3 +49,6 @@ benchmarking/target/
 
 # Zensical docs build output
 docs/site/
+
+# Generated knowledge graph
+/graphify-out/

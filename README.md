@@ -14,21 +14,35 @@
 Locking is a very common expectation in SoA, where a vulnerable entity needs to be protected for a certain duration.
 And the definition of vulnerable entity changes from one client to another depending on the use-cases at hand.
 
-Distributed Lock Manager is an easy-to-use library to achieve various modes of locking, be it - Exclusive or Limited Protected(LP).
-In current version, Exclusive locking mode is supported with Aerospike as the underlying storage base by leveraging
-its MVCC (MultiVersion Concurrency Control) capability.
+Distributed Lock Manager is an easy-to-use library for exclusive distributed locking with Aerospike or HBase as the underlying storage backend.
 
 ## Add Maven Dependency
+
+Choose the module for your storage backend. Each backend module brings `dlm-core` transitively without bringing the other backend's client dependencies.
+
+### Aerospike
 
 ```xml
 <dependency>
   <groupId>com.phonepe</groupId>
-  <artifactId>DLM</artifactId>
+  <artifactId>dlm-aerospike</artifactId>
   <version>${dlm.version}</version>
 </dependency>
 ```
 
-> Replace `${dlm.version}` with the latest version from [Maven Central](https://central.sonatype.com/artifact/com.phonepe/DLM) or [GitHub Releases](https://github.com/PhonePe/DLM/releases).
+### HBase
+
+```xml
+<dependency>
+  <groupId>com.phonepe</groupId>
+  <artifactId>dlm-hbase</artifactId>
+  <version>${dlm.version}</version>
+</dependency>
+```
+
+Use `dlm-core` directly only when implementing a custom `ILockStore`.
+
+> Replace `${dlm.version}` with the latest version from [Maven Central](https://central.sonatype.com/namespace/com.phonepe) or [GitHub Releases](https://github.com/PhonePe/DLM/releases).
 
 
 ### Usage
