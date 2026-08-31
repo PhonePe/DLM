@@ -19,12 +19,13 @@ package com.phonepe.dlm.hbase.storage;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
-import org.mockito.Mockito;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+
+import static org.mockito.Mockito.mock;
 
 @SuppressWarnings("serial")
 public class HBaseConnectionStub implements Connection, Serializable {
@@ -72,7 +73,7 @@ public class HBaseConnectionStub implements Connection, Serializable {
 
     @Override
     public Admin getAdmin() {
-        return Mockito.mock(Admin.class);
+        return mock(Admin.class);
     }
 
     @Override

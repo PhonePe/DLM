@@ -31,7 +31,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,14 +40,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 
 @Slf4j
-public class DistributedLockWithHBaseTest {
+class DistributedLockWithHBaseTest {
     private DistributedLockManager lockManager;
     private HBaseConnectionStub connection;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         connection = new HBaseConnectionStub();
         lockManager = DistributedLockManager.builder()
                 .clientId("CLIENT_ID")
@@ -65,12 +67,12 @@ public class DistributedLockWithHBaseTest {
     }
 
     @AfterEach
-    public void destroy() {
+    void destroy() {
         lockManager.destroy();
     }
 
     @Test
-    public void lockTestPositiveSiloDC() {
+    void lockTestPositiveSiloDC() {
         final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.tryAcquireLock(lock);
         Assertions.assertTrue(lock.getAcquiredStatus().get());
@@ -85,7 +87,7 @@ public class DistributedLockWithHBaseTest {
     }
 
     @Test
-    public void lockTestPositiveXDC() {
+    void lockTestPositiveXDC() {
         final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.XDC);
         lockManager.tryAcquireLock(lock);
         Assertions.assertTrue(lock.getAcquiredStatus().get());
@@ -100,7 +102,7 @@ public class DistributedLockWithHBaseTest {
     }
 
     @Test
-    public void lockTestNegative1() {
+    void lockTestNegative1() {
         final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.tryAcquireLock(lock);
         Assertions.assertTrue(lock.getAcquiredStatus().get());
@@ -110,7 +112,7 @@ public class DistributedLockWithHBaseTest {
     }
 
     @Test
-    public void lockTestNegative2() {
+    void lockTestNegative2() {
         Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.tryAcquireLock(lock);
 
@@ -121,7 +123,7 @@ public class DistributedLockWithHBaseTest {
     }
 
     @Test
-    public void lockTestNegative3() {
+    void lockTestNegative3() {
         final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.tryAcquireLock(lock);
 
@@ -131,9 +133,9 @@ public class DistributedLockWithHBaseTest {
     }
 
     @Test
-    public void testInitializeWithException() {
-        final HBaseConnectionStub connectionSpy = Mockito.spy(connection);
-        Mockito.doThrow(RuntimeException.class)
+    void testInitializeWithException() {
+        final HBaseConnectionStub connectionSpy = spy(connection);
+        doThrow(RuntimeException.class)
                 .when(connectionSpy)
                 .getAdmin();
         lockManager = DistributedLockManager.builder()
@@ -151,9 +153,9 @@ public class DistributedLockWithHBaseTest {
     }
 
     @Test
-    public void testCloseWithException() {
-        final HBaseConnectionStub connectionSpy = Mockito.spy(connection);
-        Mockito.doThrow(RuntimeException.class)
+    void testCloseWithException() {
+        final HBaseConnectionStub connectionSpy = spy(connection);
+        doThrow(RuntimeException.class)
                 .when(connectionSpy)
                 .close();
         lockManager = DistributedLockManager.builder()
@@ -167,20 +169,13 @@ public class DistributedLockWithHBaseTest {
                         .build())
                 .build();
 
-        try {
-            lockManager.destroy();
-            Assertions.fail("Should have thrown an exception");
-        } catch (DLMException e) {
-            Assertions.assertEquals(ErrorCode.INTERNAL_ERROR, e.getErrorCode());
-            // revert the behavior
-            Mockito.doNothing()
-                    .when(connectionSpy)
-                    .close();
-        }
+        final DLMException exception = assertThrows(DLMException.class, lockManager::destroy);
+        assertEquals(ErrorCode.INTERNAL_ERROR, exception.getErrorCode());
+        doNothing().when(connectionSpy).close();
     }
 
     @Test
-    public void concurrentLockAttempt() {
+    void concurrentLockAttempt() {
         final int attempts = Runtime.getRuntime()
                 .availableProcessors();
         final Map<String, AtomicInteger> trackers = new ConcurrentHashMap<>();

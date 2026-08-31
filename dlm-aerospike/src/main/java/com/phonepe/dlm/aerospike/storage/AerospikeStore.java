@@ -62,9 +62,7 @@ public class AerospikeStore implements ILockStore {
             binList.add(new Bin(AerospikeUtils.getBin(DATA_BIN, farmId), 1));
             binList.add(new Bin(AerospikeUtils.getBin(MODIFIED_AT_BIN, farmId), System.currentTimeMillis()));
 
-            AerospikeUtils.retry(() -> {
-                write(lockId, lockLevel, farmId, writePolicy, binList);
-            });
+            AerospikeUtils.retry(() -> write(lockId, lockLevel, farmId, writePolicy, binList));
         } catch (DLMException e) {
             if (e.getErrorCode() == ErrorCode.LOCK_UNAVAILABLE) {
                 throw e;

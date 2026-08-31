@@ -53,7 +53,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * @author shantanu.tiwari
  */
 @Slf4j
-public class DistributedLockWithAerospikeTest {
+class DistributedLockWithAerospikeTest {
     public static final String AEROSPIKE_HOST = "localhost";
     public static final String AEROSPIKE_DOCKER_IMAGE = "aerospike/aerospike-server:6.4.0.23";
     public static final String AEROSPIKE_NAMESPACE = "DLM";
@@ -61,7 +61,7 @@ public class DistributedLockWithAerospikeTest {
     private static final GenericContainer<?> AEROSPIKE_DOCKER_CONTAINER;
 
     private DistributedLockManager lockManager;
-    public AerospikeClient aerospikeClient;
+    private AerospikeClient aerospikeClient;
 
     static {
         AEROSPIKE_DOCKER_CONTAINER = new GenericContainer<>(DockerImageName.parse(AEROSPIKE_DOCKER_IMAGE))
@@ -87,7 +87,7 @@ public class DistributedLockWithAerospikeTest {
     }
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         aerospikeClient = new AerospikeClient(new ClientPolicy(),
                 new Host(AEROSPIKE_DOCKER_CONTAINER.getHost(), AEROSPIKE_DOCKER_CONTAINER.getMappedPort(AEROSPIKE_PORT)));
         aerospikeClient.truncate(aerospikeClient.getInfoPolicyDefault(), AEROSPIKE_NAMESPACE, null, null);
@@ -97,7 +97,7 @@ public class DistributedLockWithAerospikeTest {
     }
 
     @Test
-    public void lockPositiveSiloDCTest() {
+    void lockPositiveSiloDCTest() {
         final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.tryAcquireLock(lock);
         Assertions.assertTrue(lock.getAcquiredStatus()
@@ -114,7 +114,7 @@ public class DistributedLockWithAerospikeTest {
     }
 
     @Test
-    public void lockPositiveXDCTest() {
+    void lockPositiveXDCTest() {
         final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.XDC);
         lockManager.tryAcquireLock(lock, Duration.ofSeconds(90));
         Assertions.assertTrue(lock.getAcquiredStatus()
@@ -132,7 +132,7 @@ public class DistributedLockWithAerospikeTest {
     }
 
     @Test
-    public void lockUnavailableForAcquireLockTest() {
+    void lockUnavailableForAcquireLockTest() {
         final Lock lock = lockManager.getLockInstance("NEW_LOCK_ID", LockLevel.DC);
         lockManager.acquireLock(lock, Duration.ofSeconds(30)); // Wait and try acquiring the lock.
 
@@ -142,7 +142,7 @@ public class DistributedLockWithAerospikeTest {
     }
 
     @Test
-    public void lockUnavailableForTryAcquireLockWithSameLockInstanceTest() {
+    void lockUnavailableForTryAcquireLockWithSameLockInstanceTest() {
         final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.acquireLock(lock, Duration.ofSeconds(30), Duration.ofSeconds(5));
         Assertions.assertTrue(lock.getAcquiredStatus().get());
@@ -152,7 +152,7 @@ public class DistributedLockWithAerospikeTest {
     }
 
     @Test
-    public void lockUnavailableForTryAcquireLockWithDifferentLockInstanceTest() {
+    void lockUnavailableForTryAcquireLockWithDifferentLockInstanceTest() {
         Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         lockManager.tryAcquireLock(lock);
         Assertions.assertTrue(lock.getAcquiredStatus().get());
@@ -164,7 +164,7 @@ public class DistributedLockWithAerospikeTest {
     }
 
     @Test
-    public void concurrentLockAttemptTest() {
+    void concurrentLockAttemptTest() {
         final int attempts = Runtime.getRuntime()
                 .availableProcessors();
         final Map<String, AtomicInteger> trackers = new ConcurrentHashMap<>();
@@ -233,13 +233,13 @@ public class DistributedLockWithAerospikeTest {
     }
 
     @Test
-    public void exceptionInLockTest() {
+    void exceptionInLockTest() {
         final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
         assertThrows(DLMException.class, () -> lockManager.acquireLock(lock, Duration.ofDays(7300)));
     }
 
     @Test
-    public void interruptedExceptionInLockTest() {
+    void interruptedExceptionInLockTest() {
         try {
             final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
             lockManager.acquireLock(lock);
@@ -253,7 +253,7 @@ public class DistributedLockWithAerospikeTest {
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         if (aerospikeClient != null) {
             aerospikeClient.truncate(aerospikeClient.getInfoPolicyDefault(), AEROSPIKE_NAMESPACE, null, null);
         }
@@ -262,7 +262,7 @@ public class DistributedLockWithAerospikeTest {
         }
     }
 
-    public DistributedLockManager getLockManager(final LockMode lockMode) {
+    private DistributedLockManager getLockManager(final LockMode lockMode) {
         return lockMode.accept(() -> DistributedLockManager.builder()
                 .clientId("CLIENT_ID")
                 .farmId("FA1")

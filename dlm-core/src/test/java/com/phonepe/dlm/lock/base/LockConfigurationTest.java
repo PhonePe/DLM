@@ -19,12 +19,12 @@ package com.phonepe.dlm.lock.base;
 import com.phonepe.dlm.lock.mode.LockMode;
 import com.phonepe.dlm.lock.storage.ILockStore;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
 
 /**
  * Unit tests for {@link LockConfiguration}.
@@ -36,10 +36,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  *   <li>{@link LockBase} honours a supplied {@link LockConfiguration}</li>
  * </ul>
  */
-public class LockConfigurationTest {
+class LockConfigurationTest {
 
     @Test
-    public void partialConfigFallsBackToDefaultsForUnsetFields() {
+    void partialConfigFallsBackToDefaultsForUnsetFields() {
         // Only lockTtl is set; the other two should fall back to library defaults.
         final LockConfiguration config = LockConfiguration.builder()
                 .lockTtl(Duration.ofSeconds(45))
@@ -51,8 +51,8 @@ public class LockConfigurationTest {
     }
 
     @Test
-    public void lockBaseBuilderBackwardCompatibleWithoutConfiguration() {
-        final ILockStore mockStore = Mockito.mock(ILockStore.class);
+    void lockBaseBuilderBackwardCompatibleWithoutConfiguration() {
+        final ILockStore mockStore = mock(ILockStore.class);
 
         final LockBase lockBase = LockBase.builder()
                 .mode(LockMode.EXCLUSIVE)
@@ -66,8 +66,8 @@ public class LockConfigurationTest {
     }
 
     @Test
-    public void lockBaseHonoursCustomConfiguration() {
-        final ILockStore mockStore = Mockito.mock(ILockStore.class);
+    void lockBaseHonoursCustomConfiguration() {
+        final ILockStore mockStore = mock(ILockStore.class);
         final LockConfiguration custom = LockConfiguration.builder()
                 .lockTtl(Duration.ofSeconds(20))
                 .waitForLock(Duration.ofSeconds(5))
