@@ -2,6 +2,16 @@
 
 Use `AerospikeStore` when your workload needs low-latency lock operations backed by Aerospike's in-memory storage.
 
+## Dependency
+
+```xml
+<dependency>
+  <groupId>com.phonepe</groupId>
+  <artifactId>dlm-aerospike</artifactId>
+  <version>${dlm.version}</version>
+</dependency>
+```
+
 ## Configuration
 
 ```java
@@ -55,7 +65,7 @@ This means `DC` locks from different farms are stored in different sets, providi
 
 ## Retry behavior
 
-All Aerospike operations are wrapped in a `guava-retrying` retryer:
+Aerospike operations retry transient `AerospikeException` failures:
 
 | Setting | Value |
 |---------|-------|
