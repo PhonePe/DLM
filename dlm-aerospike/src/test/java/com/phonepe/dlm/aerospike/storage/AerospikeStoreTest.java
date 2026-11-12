@@ -47,7 +47,7 @@ class AerospikeStoreTest {
         when(client.getWritePolicyDefault()).thenThrow(new IllegalStateException("client unavailable"));
 
         final DLMException exception = assertThrows(DLMException.class,
-                () -> store.write("lock", LockLevel.DC, "farm", Duration.ofSeconds(30)));
+                () -> store.write("lock", LockLevel.DC, "farm", Duration.ofSeconds(30), ACQUIRED_AT));
 
         assertEquals(ErrorCode.CONNECTION_ERROR, exception.getErrorCode());
     }
@@ -122,30 +122,6 @@ class AerospikeStoreTest {
     }
 
     @Test
-    void deprecatedRemoveDeletesWithoutOwnershipFilter() {
-        when(client.getWritePolicyDefault()).thenReturn(new WritePolicy());
-
-        store.remove("lock", LockLevel.DC, "farm");
-
-        final ArgumentCaptor<WritePolicy> policy = ArgumentCaptor.forClass(WritePolicy.class);
-        verify(client).delete(policy.capture(), any(Key.class));
-        assertNull(policy.getValue().filterExp);
-    }
-
-    @Test
-    void deprecatedRemoveRetriesThenFails() {
-        when(client.getWritePolicyDefault()).thenReturn(new WritePolicy());
-        when(client.delete(any(WritePolicy.class), any(Key.class)))
-                .thenThrow(new AerospikeException(ResultCode.TIMEOUT));
-
-        final DLMException exception = assertThrows(DLMException.class,
-                () -> store.remove("lock", LockLevel.DC, "farm"));
-
-        assertEquals(ErrorCode.RETRIES_EXHAUSTED, exception.getErrorCode());
-        verify(client, times(5)).delete(any(WritePolicy.class), any(Key.class));
-    }
-
-    @Test
     void ownerCheckedRemoveRetriesOtherFailuresThenFails() {
         when(client.getWritePolicyDefault()).thenReturn(new WritePolicy());
         when(client.delete(any(WritePolicy.class), any(Key.class)))
@@ -156,23 +132,6 @@ class AerospikeStoreTest {
 
         assertEquals(ErrorCode.RETRIES_EXHAUSTED, exception.getErrorCode());
         verify(client, times(5)).delete(any(WritePolicy.class), any(Key.class));
-    }
-
-    @Test
-    @SuppressWarnings("deprecation")
-    void deprecatedWriteStampsCurrentTimeInModifiedAtBin() {
-        when(client.getWritePolicyDefault()).thenReturn(new WritePolicy());
-        final long before = System.currentTimeMillis();
-
-        store.write("lock", LockLevel.DC, "farm", Duration.ofSeconds(30));
-
-        final ArgumentCaptor<Bin> bins = ArgumentCaptor.forClass(Bin.class);
-        verify(client).put(any(WritePolicy.class), any(Key.class), bins.capture());
-        final long stamped = bins.getAllValues().stream()
-                .filter(bin -> bin.name.equals("farm##uat"))
-                .findFirst().orElseThrow()
-                .value.toLong();
-        assertTrue(stamped >= before && stamped <= System.currentTimeMillis());
     }
 
     @Test

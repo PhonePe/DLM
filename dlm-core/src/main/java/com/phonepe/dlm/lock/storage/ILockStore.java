@@ -35,37 +35,7 @@ public interface ILockStore {
     void initialize();
 
     /**
-     * Writes the lock record if it does not already exist.
-     *
-     * @param lockId     the lock identifier
-     * @param lockLevel  the lock level ({@code DC} or {@code XDC}), which determines where the record is stored
-     * @param farmId     the farm (data centre) of the caller
-     * @param ttlSeconds how long the lock record lives before the store expires it
-     * @throws com.phonepe.dlm.exception.DLMException with {@code LOCK_UNAVAILABLE} if the lock is already held
-     * @deprecated Use {@link #write(String, LockLevel, String, Duration, long)}, which records the acquisition
-     * timestamp so that {@link #remove(String, LockLevel, String, long)} can verify ownership on release.
-     */
-    @Deprecated
-    void write(String lockId, LockLevel lockLevel, String farmId, Duration ttlSeconds);
-
-    /**
-     * Removes the lock record unconditionally.
-     *
-     * @param lockId     the lock identifier
-     * @param lockLevel  the lock level ({@code DC} or {@code XDC}), which determines where the record is stored
-     * @param farmId     the farm (data centre) of the caller
-     * @deprecated Unsafe if the lock has expired and been re-acquired by another holder: this deletes the other
-     * holder's lock. Use {@link #remove(String, LockLevel, String, long)}.
-     */
-    @Deprecated
-    void remove(String lockId, LockLevel lockLevel, String farmId);
-
-    /**
-     * Writes the lock record if it does not already exist, stamped with {@code acquiredAt}.
-     * <p>
-     * The default implementation delegates to the deprecated {@link #write(String, LockLevel, String, Duration)}
-     * (without storing {@code acquiredAt}) so that existing custom stores keep working. Stores should override it
-     * to persist {@code acquiredAt}.
+     * Writes the lock record, stamped with {@code acquiredAt}, only if it does not already exist (create-only).
      *
      * @param lockId     the lock identifier
      * @param lockLevel  the lock level ({@code DC} or {@code XDC}), which determines where the record is stored
@@ -75,17 +45,11 @@ public interface ILockStore {
      *                   {@link #remove(String, LockLevel, String, long)}
      * @throws com.phonepe.dlm.exception.DLMException with {@code LOCK_UNAVAILABLE} if the lock is already held
      */
-    default void write(String lockId, LockLevel lockLevel, String farmId, Duration ttlSeconds, long acquiredAt) {
-        write(lockId, lockLevel, farmId, ttlSeconds);
-    }
+    void write(String lockId, LockLevel lockLevel, String farmId, Duration ttlSeconds, long acquiredAt);
 
     /**
-     * Removes the lock record only if it still carries {@code acquiredAt}, i.e. it is still held by the caller and
-     * has not expired and been re-acquired by someone else.
-     * <p>
-     * The default implementation delegates to the deprecated, unconditional
-     * {@link #remove(String, LockLevel, String)} and returns {@code true}, preserving the behaviour of existing custom
-     * stores. Stores should override it to perform the ownership check.
+     * Atomically removes the lock record only if it still carries {@code acquiredAt}, i.e. it is still held by the
+     * caller and has not expired and been re-acquired by someone else.
      *
      * @param lockId     the lock identifier
      * @param lockLevel  the lock level ({@code DC} or {@code XDC}), which determines where the record is stored
@@ -95,10 +59,7 @@ public interface ILockStore {
      * another holder. A store that retains expired records until a later sweep may return {@code true} for the
      * caller's own expired, not-yet-swept record; it must never remove a record carrying a different stamp.
      */
-    default boolean remove(String lockId, LockLevel lockLevel, String farmId, long acquiredAt) {
-        remove(lockId, lockLevel, farmId);
-        return true;
-    }
+    boolean remove(String lockId, LockLevel lockLevel, String farmId, long acquiredAt);
 
     /**
      * Releases backend resources such as connections.

@@ -53,15 +53,6 @@ public class AerospikeStore implements ILockStore {
     }
 
     /**
-     * @deprecated Use {@link #write(String, LockLevel, String, Duration, long)}.
-     */
-    @Deprecated
-    @Override
-    public void write(String lockId, LockLevel lockLevel, String farmId, Duration ttlSeconds) {
-        write(lockId, lockLevel, farmId, ttlSeconds, System.currentTimeMillis());
-    }
-
-    /**
      * Creates the lock record (create-only, via generation check) with {@code acquiredAt} stored in the
      * {@code <farm>##uat} bin, which {@link #remove(String, LockLevel, String, long)} uses to verify ownership.
      */
@@ -83,25 +74,6 @@ public class AerospikeStore implements ILockStore {
                 throw e;
             }
             throw connectionError(lockId, e);
-        } catch (RuntimeException e) {
-            throw connectionError(lockId, e);
-        }
-    }
-
-    /**
-     * @deprecated Deletes the record unconditionally, which removes another holder's lock if this one had expired
-     * and been re-acquired. Use {@link #remove(String, LockLevel, String, long)}.
-     */
-    @Deprecated
-    @Override
-    public void remove(String lockId, LockLevel lockLevel, String farmId) {
-        try {
-            AerospikeUtils.retry(() ->
-                    aerospikeClient.delete(aerospikeClient.getWritePolicyDefault(),
-                            new Key(namespace, getSetName(lockLevel, farmId), lockId))
-            );
-        } catch (AerospikeException e) {
-            throw removalError(lockId, e);
         } catch (RuntimeException e) {
             throw connectionError(lockId, e);
         }

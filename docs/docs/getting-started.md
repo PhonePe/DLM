@@ -36,8 +36,8 @@ Use `dlm-core` directly only when implementing a custom `ILockStore`. Replace `$
 !!! note "Custom `ILockStore` implementations"
     Implement `write(lockId, lockLevel, farmId, ttl, acquiredAt)` to persist the acquisition timestamp, and
     `remove(lockId, lockLevel, farmId, acquiredAt)` to delete the record **only if** it still carries that timestamp
-    (atomically), returning whether it was removed. The older `write(..., ttl)` and `remove(...)` methods are
-    deprecated: a store that implements only those keeps working, but its release is not ownership-checked.
+    (atomically), returning whether it was removed. `write` must be create-only, failing with `LOCK_UNAVAILABLE` if
+    the record already exists.
 
 ## Build locally
 

@@ -107,19 +107,6 @@ class HBaseStoreTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    void deprecatedWriteAndRemoveStillLockAndUnlock() {
-        store.write(LOCK_ID, LockLevel.DC, FARM_ID, TTL);
-        final DLMException exception = assertThrows(DLMException.class,
-                () -> store.write(LOCK_ID, LockLevel.DC, FARM_ID, TTL));
-        assertEquals(ErrorCode.LOCK_UNAVAILABLE, exception.getErrorCode());
-
-        store.remove(LOCK_ID, LockLevel.DC, FARM_ID);
-
-        assertTrue(connection.getTable(TABLE).getData().isEmpty());
-    }
-
-    @Test
     void writeStampsCellTimestampWithAcquisitionTime() throws IOException {
         final Table.CheckAndMutateBuilder builder = selfReturningBuilder();
         when(builder.thenPut(any(Put.class))).thenReturn(true);
@@ -179,15 +166,6 @@ class HBaseStoreTest {
                 () -> failingStore().write(LOCK_ID, LockLevel.DC, FARM_ID, TTL, ACQUIRED_AT));
 
         assertEquals(ErrorCode.CONNECTION_ERROR, exception.getErrorCode());
-    }
-
-    @Test
-    @SuppressWarnings("deprecation")
-    void deprecatedRemoveWrapsIOException() throws IOException {
-        final DLMException exception = assertThrows(DLMException.class,
-                () -> failingStore().remove(LOCK_ID, LockLevel.DC, FARM_ID));
-
-        assertEquals(ErrorCode.INTERNAL_ERROR, exception.getErrorCode());
     }
 
     private HBaseStore failingStore() throws IOException {

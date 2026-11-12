@@ -70,15 +70,6 @@ public class HBaseStore implements ILockStore {
     }
 
     /**
-     * @deprecated Use {@link #write(String, LockLevel, String, Duration, long)}.
-     */
-    @Deprecated
-    @Override
-    public void write(String lockId, LockLevel lockLevel, String farmId, Duration ttlSeconds) {
-        write(lockId, lockLevel, farmId, ttlSeconds, System.currentTimeMillis());
-    }
-
-    /**
      * Creates the lock cell (only if absent) with {@code acquiredAt} as both its value and its cell timestamp.
      * The value is what {@link #remove(String, LockLevel, String, long)} checks for ownership; the timestamp lets that
      * release delete exactly this cell version (see there).
@@ -106,20 +97,6 @@ public class HBaseStore implements ILockStore {
                     .message(String.format("Error writing lock in HBase [id = %s]", lockId))
                     .build();
         } catch (Exception e) {
-            throw DLMException.propagate(e);
-        }
-    }
-
-    /**
-     * @deprecated Deletes the row unconditionally, which removes another holder's lock if this one had expired and
-     * been re-acquired. Use {@link #remove(String, LockLevel, String, long)}.
-     */
-    @Deprecated
-    @Override
-    public void remove(String lockId, LockLevel lockLevel, String farmId) {
-        try (final Table table = getTable()) {
-            table.delete(new Delete(getNormalisedRowKey(lockId, lockLevel, farmId)));
-        } catch (IOException e) {
             throw DLMException.propagate(e);
         }
     }

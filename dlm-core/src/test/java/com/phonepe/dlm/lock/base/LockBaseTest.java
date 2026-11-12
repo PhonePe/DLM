@@ -26,8 +26,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -144,42 +142,6 @@ class LockBaseTest {
         assertTrue(lock.getAcquiredAt().get() > firstAcquiredAt);
         lockBase.releaseLock(lock);
         verify(store).remove(LOCK_ID, LockLevel.DC, FARM_ID, lock.getAcquiredAt().get());
-    }
-
-    @Test
-    void customStoreImplementingOnlyDeprecatedMethodsKeepsWorking() {
-        final List<String> calls = new ArrayList<>();
-        final ILockStore legacyStore = new ILockStore() {
-            @Override
-            public void initialize() {
-                // no-op
-            }
-
-            @Override
-            public void write(String lockId, LockLevel lockLevel, String farmId, Duration ttlSeconds) {
-                calls.add("write");
-            }
-
-            @Override
-            public void remove(String lockId, LockLevel lockLevel, String farmId) {
-                calls.add("remove");
-            }
-
-            @Override
-            public void close() {
-                // no-op
-            }
-        };
-        final LockBase legacyLockBase = LockBase.builder()
-                .mode(LockMode.EXCLUSIVE)
-                .lockStore(legacyStore)
-                .build();
-        final Lock lock = newLock();
-
-        legacyLockBase.tryAcquireLock(lock, TTL);
-        assertTrue(legacyLockBase.releaseLock(lock));
-
-        assertEquals(List.of("write", "remove"), calls);
     }
 
     private static Lock newLock() {
