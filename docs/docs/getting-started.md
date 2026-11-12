@@ -33,12 +33,6 @@ Choose the module for the storage backend used by your application. The selected
 
 Use `dlm-core` directly only when implementing a custom `ILockStore`. Replace `${dlm.version}` with the latest version from [Maven Central](https://central.sonatype.com/namespace/com.phonepe) or [GitHub Releases](https://github.com/PhonePe/DLM/releases).
 
-!!! note "Custom `ILockStore` implementations"
-    Implement `write(lockId, lockLevel, farmId, ttl, acquiredAt)` to persist the acquisition timestamp, and
-    `remove(lockId, lockLevel, farmId, acquiredAt)` to delete the record **only if** it still carries that timestamp
-    (atomically), returning whether it was removed. `write` must be create-only, failing with `LOCK_UNAVAILABLE` if
-    the record already exists.
-
 ## Build locally
 
 ```bash
