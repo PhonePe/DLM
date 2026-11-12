@@ -60,7 +60,7 @@ Each lock identity is scoped to a **client**. Internally the lock ID is stored a
 1. **Initialize** — `lockManager.initialize()` prepares the storage backend (e.g. creates the HBase table).
 2. **Get lock instance** — `lockManager.getLockInstance(id, level)` creates a `Lock` object.
 3. **Acquire** — `tryAcquireLock` / `acquireLock` writes a record to the store with a TTL.
-4. **Release** — `releaseLock` removes the record from the store.
+4. **Release** — `releaseLock` removes the record from the store, only if it still belongs to this lock instance (ownership-checked).
 5. **Destroy** — `lockManager.destroy()` closes the underlying storage connection.
 
 ## What to read next

@@ -87,6 +87,30 @@ class DistributedLockWithHBaseTest {
     }
 
     @Test
+    void releaseAfterExpiryDoesNotRemoveLockReacquiredByAnotherHolder() throws InterruptedException {
+        final Lock holderA = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
+        lockManager.tryAcquireLock(holderA);
+
+        // Simulate A's lock expiring (the stub has no TTL support), then B acquiring it.
+        connection.getTable("dlm_locks").getData().clear();
+        Thread.sleep(2); // B's acquisition timestamp must differ from A's, as it would after a real (>= 1s) TTL
+        final Lock holderB = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
+        lockManager.tryAcquireLock(holderB);
+
+        // A's late release must not delete B's lock.
+        Assertions.assertFalse(lockManager.releaseLock(holderA));
+        Assertions.assertFalse(holderA.getAcquiredStatus().get());
+        final Lock holderC = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
+        final DLMException exception = assertThrows(DLMException.class, () -> lockManager.tryAcquireLock(holderC));
+        assertEquals(ErrorCode.LOCK_UNAVAILABLE, exception.getErrorCode());
+
+        // B still owns it and can release it.
+        Assertions.assertTrue(lockManager.releaseLock(holderB));
+        lockManager.tryAcquireLock(holderC);
+        Assertions.assertTrue(holderC.getAcquiredStatus().get());
+    }
+
+    @Test
     void lockTestPositiveXDC() {
         final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.XDC);
         lockManager.tryAcquireLock(lock);

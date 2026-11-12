@@ -21,6 +21,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Getter
 public class Lock {
@@ -28,6 +29,12 @@ public class Lock {
     private final LockLevel lockLevel;
     private final String farmId;
     private final AtomicBoolean acquiredStatus = new AtomicBoolean();
+    /**
+     * Epoch millis at which this lock instance last acquired the lock. It is written to the store on acquisition and
+     * used on release to verify that the stored lock still belongs to this instance (i.e. it has not expired and been
+     * re-acquired by another holder). Meaningful only while {@link #acquiredStatus} is {@code true}.
+     */
+    private final AtomicLong acquiredAt = new AtomicLong();
 
     @Builder
     public Lock(final String lockId, final LockLevel lockLevel, final String farmId) {

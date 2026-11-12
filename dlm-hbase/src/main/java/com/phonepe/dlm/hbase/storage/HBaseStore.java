@@ -44,7 +44,6 @@ public class HBaseStore implements ILockStore {
             ONE_BYTE_HASHER);
     private static final byte[] COLUMN_FAMILY = Bytes.toBytes("D");
     private static final byte[] COLUMN_NAME = Bytes.toBytes("L");
-    private static final byte[] COLUMN_DATA = Bytes.toBytes("M");
     private Connection connection;
     private String tableName;
 
@@ -70,16 +69,21 @@ public class HBaseStore implements ILockStore {
         }
     }
 
+    /**
+     * Creates the lock cell (only if absent) with {@code acquiredAt} as both its value and its cell timestamp.
+     * The value is what {@link #remove(String, LockLevel, String, long)} checks for ownership; the timestamp lets that
+     * release delete exactly this cell version (see there).
+     */
     @Override
-    public void write(String lockId, LockLevel lockLevel, String farmId, Duration ttlSeconds) {
+    public void write(String lockId, LockLevel lockLevel, String farmId, Duration ttlSeconds, long acquiredAt) {
         final byte[] normalisedRowKey = getNormalisedRowKey(lockId, lockLevel, farmId);
 
         try (final Table table = getTable()) {
             final boolean result = table.checkAndMutate(normalisedRowKey, COLUMN_FAMILY)
                     .qualifier(COLUMN_NAME)
                     .ifNotExists()
-                    .thenPut(new Put(normalisedRowKey, System.currentTimeMillis()).setTTL(ttlSeconds.getSeconds() * 1_000L)
-                            .addColumn(COLUMN_FAMILY, COLUMN_NAME, COLUMN_DATA));
+                    .thenPut(new Put(normalisedRowKey, acquiredAt).setTTL(ttlSeconds.getSeconds() * 1_000L)
+                            .addColumn(COLUMN_FAMILY, COLUMN_NAME, Bytes.toBytes(acquiredAt)));
             if (!result) {
                 throw DLMException.builder()
                         .errorCode(ErrorCode.LOCK_UNAVAILABLE)
@@ -97,10 +101,26 @@ public class HBaseStore implements ILockStore {
         }
     }
 
+    /**
+     * Atomically deletes this holder's lock cell, only if the cell still holds {@code acquiredAt}.
+     * <p>
+     * The delete targets the single cell version written at {@code acquiredAt} rather than the whole row. A whole-row
+     * delete leaves a tombstone stamped with the region server's clock, which hides any cell with an older timestamp;
+     * since lock cells are stamped with the client's clock, a lock re-acquired shortly after a release (within the
+     * client/server clock skew) would be written but invisible, letting a second holder acquire it too. A
+     * version-specific delete hides only this holder's cell, so the next holder's cell is always visible.
+     *
+     * @return {@code true} if this holder's lock was deleted; {@code false} if it no longer exists (expired) or now
+     * belongs to another holder
+     */
     @Override
-    public void remove(String lockId, LockLevel lockLevel, String farmId) {
+    public boolean remove(String lockId, LockLevel lockLevel, String farmId, long acquiredAt) {
+        final byte[] normalisedRowKey = getNormalisedRowKey(lockId, lockLevel, farmId);
         try (final Table table = getTable()) {
-            table.delete(new Delete(getNormalisedRowKey(lockId, lockLevel, farmId)));
+            return table.checkAndMutate(normalisedRowKey, COLUMN_FAMILY)
+                    .qualifier(COLUMN_NAME)
+                    .ifEquals(Bytes.toBytes(acquiredAt))
+                    .thenDelete(new Delete(normalisedRowKey).addColumn(COLUMN_FAMILY, COLUMN_NAME, acquiredAt));
         } catch (IOException e) {
             throw DLMException.propagate(e);
         }

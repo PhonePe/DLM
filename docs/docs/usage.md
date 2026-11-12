@@ -205,6 +205,11 @@ boolean released = lockManager.releaseLock(lock);
 
 - Returns `true` if the lock was held and successfully released.
 - Returns `false` if the lock was not held by this instance (i.e. `acquiredStatus` was already `false`).
+- Returns `false` if the lock is no longer this instance's: it expired and another holder acquired it (that holder's
+  lock is **not** removed), or its record is already gone. A warning is logged, since it means the critical section
+  outlived the lock's TTL.
+- A lock that expired but was **not** re-acquired may still return `true` on Aerospike (expired records are kept until
+  the namespace's expiry sweep); only this instance's own stale record is removed.
 
 !!! warning
     Always release in a `finally` block to avoid lock leaks.
