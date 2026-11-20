@@ -24,10 +24,10 @@ import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -35,6 +35,7 @@ import static org.mockito.Mockito.when;
 
 class AerospikeStoreTest {
     private static final long ACQUIRED_AT = 1_700_000_000_123L;
+    private static final Duration TTL = Duration.ofSeconds(30);
     private final IAerospikeClient client = mock(IAerospikeClient.class);
     private final AerospikeStore store = AerospikeStore.builder()
             .aerospikeClient(client)
@@ -47,7 +48,7 @@ class AerospikeStoreTest {
         when(client.getWritePolicyDefault()).thenThrow(new IllegalStateException("client unavailable"));
 
         final DLMException exception = assertThrows(DLMException.class,
-                () -> store.write("lock", LockLevel.DC, "farm", Duration.ofSeconds(30), ACQUIRED_AT));
+                () -> store.write("lock", LockLevel.DC, "farm", TTL, ACQUIRED_AT));
 
         assertEquals(ErrorCode.CONNECTION_ERROR, exception.getErrorCode());
     }
@@ -72,7 +73,7 @@ class AerospikeStoreTest {
     void writeStoresAcquisitionTimestampInModifiedAtBin() {
         when(client.getWritePolicyDefault()).thenReturn(new WritePolicy());
 
-        store.write("lock", LockLevel.DC, "farm", Duration.ofSeconds(30), ACQUIRED_AT);
+        store.write("lock", LockLevel.DC, "farm", TTL, ACQUIRED_AT);
 
         final ArgumentCaptor<Bin> bins = ArgumentCaptor.forClass(Bin.class);
         verify(client).put(any(WritePolicy.class), any(Key.class), bins.capture());
@@ -137,12 +138,12 @@ class AerospikeStoreTest {
     @Test
     void writeWrapsNonLockUnavailableFailureAsConnectionError() {
         when(client.getWritePolicyDefault()).thenReturn(new WritePolicy());
-        org.mockito.Mockito.doThrow(new AerospikeException(ResultCode.TIMEOUT))
+        doThrow(new AerospikeException(ResultCode.TIMEOUT))
                 .when(client).put(any(WritePolicy.class), any(Key.class), any(Bin.class), any(Bin.class));
         Thread.currentThread().interrupt(); // retry sleep is interrupted -> DLMException(INTERNAL_ERROR) from retry
         try {
             final DLMException exception = assertThrows(DLMException.class,
-                    () -> store.write("lock", LockLevel.DC, "farm", Duration.ofSeconds(30), ACQUIRED_AT));
+                    () -> store.write("lock", LockLevel.DC, "farm", TTL, ACQUIRED_AT));
             assertEquals(ErrorCode.CONNECTION_ERROR, exception.getErrorCode());
         } finally {
             Thread.interrupted();

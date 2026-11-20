@@ -162,8 +162,10 @@ class HBaseStoreTest {
 
     @Test
     void writeWrapsIOExceptionAsConnectionError() throws IOException {
+        final HBaseStore failing = failingStore();
+
         final DLMException exception = assertThrows(DLMException.class,
-                () -> failingStore().write(LOCK_ID, LockLevel.DC, FARM_ID, TTL, ACQUIRED_AT));
+                () -> failing.write(LOCK_ID, LockLevel.DC, FARM_ID, TTL, ACQUIRED_AT));
 
         assertEquals(ErrorCode.CONNECTION_ERROR, exception.getErrorCode());
     }

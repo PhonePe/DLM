@@ -78,6 +78,7 @@ public class HBaseConnectionStub implements Connection, Serializable {
 
     @Override
     public void close() {
+        // No-op: test stub, nothing to release.
     }
 
     @Override
@@ -92,6 +93,7 @@ public class HBaseConnectionStub implements Connection, Serializable {
 
     @Override
     public void abort(String why, Throwable e) {
+        // No-op: test stub, nothing to abort.
     }
 
     @Override
