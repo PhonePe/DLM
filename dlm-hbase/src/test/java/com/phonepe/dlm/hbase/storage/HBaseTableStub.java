@@ -512,6 +512,7 @@ public class HBaseTableStub implements Table {
             }
 
             public void close() {
+                // No-op: test stub, nothing to release.
             }
 
             @Override
@@ -891,7 +892,7 @@ public class HBaseTableStub implements Table {
      */
     @Override
     public void close() {
-
+        // No-op: test stub, nothing to release.
     }
 
     @Override
@@ -936,7 +937,7 @@ public class HBaseTableStub implements Table {
             byte[] bytes1,
             R r,
             Batch.Callback<R> callback) {
-
+        // No-op: coprocessors are not used by DLM tests.
     }
 
     @Override

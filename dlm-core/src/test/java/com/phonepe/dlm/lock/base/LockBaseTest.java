@@ -129,19 +129,26 @@ class LockBaseTest {
     }
 
     @Test
-    void reacquiringSameInstanceStampsANewTimestamp() throws InterruptedException {
+    void reacquiringSameInstanceStampsANewTimestamp() {
         final Lock lock = newLock();
         when(store.remove(any(), any(), any(), anyLong())).thenReturn(true);
         lockBase.tryAcquireLock(lock, TTL);
         final long firstAcquiredAt = lock.getAcquiredAt().get();
         lockBase.releaseLock(lock);
 
-        Thread.sleep(2);
+        awaitClockPast(firstAcquiredAt);
         lockBase.tryAcquireLock(lock, TTL);
 
         assertTrue(lock.getAcquiredAt().get() > firstAcquiredAt);
         lockBase.releaseLock(lock);
         verify(store).remove(LOCK_ID, LockLevel.DC, FARM_ID, lock.getAcquiredAt().get());
+    }
+
+    /** Waits (without sleeping) until the wall clock has moved past {@code millis}. */
+    private static void awaitClockPast(final long millis) {
+        while (System.currentTimeMillis() <= millis) {
+            Thread.onSpinWait();
+        }
     }
 
     private static Lock newLock() {

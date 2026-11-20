@@ -136,8 +136,9 @@ class DistributedLockWithAerospikeTest {
         final Lock lock = lockManager.getLockInstance("NEW_LOCK_ID", LockLevel.DC);
         lockManager.acquireLock(lock, Duration.ofSeconds(30)); // Wait and try acquiring the lock.
 
+        final Duration shortWait = Duration.ofSeconds(2);
         final DLMException exception = assertThrows(DLMException.class,
-                () -> lockManager.acquireLock(lock, Duration.ofSeconds(2), Duration.ofSeconds(2)));
+                () -> lockManager.acquireLock(lock, shortWait, shortWait));
         assertEquals(ErrorCode.LOCK_UNAVAILABLE, exception.getErrorCode());
     }
 
@@ -235,7 +236,8 @@ class DistributedLockWithAerospikeTest {
     @Test
     void exceptionInLockTest() {
         final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
-        assertThrows(DLMException.class, () -> lockManager.acquireLock(lock, Duration.ofDays(7300)));
+        final Duration overflowingTtl = Duration.ofDays(7300);
+        assertThrows(DLMException.class, () -> lockManager.acquireLock(lock, overflowingTtl));
     }
 
     @Test
@@ -244,8 +246,9 @@ class DistributedLockWithAerospikeTest {
             final Lock lock = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
             lockManager.acquireLock(lock);
             Thread.currentThread().interrupt();
+            final Duration ttl = Duration.ofSeconds(30);
             final DLMException exception = assertThrows(DLMException.class,
-                    () -> lockManager.acquireLock(lock, Duration.ofSeconds(30)));
+                    () -> lockManager.acquireLock(lock, ttl));
             assertEquals(ErrorCode.INTERNAL_ERROR, exception.getErrorCode());
         } finally {
             Thread.interrupted(); // clearing thread interrupted status for isolation
