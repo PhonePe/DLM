@@ -768,26 +768,39 @@ public class HBaseTableStub implements Table {
     }
 
     @Override
-    public CheckAndMutateBuilder checkAndMutate(byte[] bytes, byte[] bytes1) {
+    public CheckAndMutateBuilder checkAndMutate(byte[] row, byte[] family) {
         return new CheckAndMutateBuilder() {
+            private byte[] checkQualifier;
+            // null => ifNotExists(); otherwise ifMatches(EQUAL, expectedValue)
+            private byte[] expectedValue;
 
             @Override
-            public CheckAndMutateBuilder ifMatches(CompareOperator arg0, byte[] arg1) {
+            public CheckAndMutateBuilder ifMatches(CompareOperator compareOperator, byte[] value) {
+                if (compareOperator != CompareOperator.EQUAL) {
+                    throw new UnsupportedOperationException(getClass() + " only supports CompareOperator.EQUAL");
+                }
+                this.expectedValue = value;
                 return this;
             }
 
             @Override
             public CheckAndMutateBuilder ifNotExists() {
+                this.expectedValue = null;
                 return this;
             }
 
             @Override
-            public CheckAndMutateBuilder qualifier(byte[] arg0) {
+            public CheckAndMutateBuilder qualifier(byte[] qualifier) {
+                this.checkQualifier = qualifier;
                 return this;
             }
 
             @Override
-            public boolean thenDelete(Delete arg0) throws IOException {
+            public boolean thenDelete(Delete delete) throws IOException {
+                if (conditionHolds()) {
+                    delete(delete);
+                    return true;
+                }
                 return false;
             }
 
@@ -797,9 +810,9 @@ public class HBaseTableStub implements Table {
             }
 
             @Override
-            public boolean thenPut(Put arg0) throws IOException {
-                if (!check(arg0.getRow(), Bytes.toBytes("D"), Bytes.toBytes("L"), Bytes.toBytes("M"))) {
-                    put(arg0);
+            public boolean thenPut(Put put) throws IOException {
+                if (conditionHolds()) {
+                    put(put);
                     return true;
                 }
                 return false;
@@ -808,6 +821,11 @@ public class HBaseTableStub implements Table {
             @Override
             public CheckAndMutateBuilder timeRange(TimeRange arg0) {
                 return this;
+            }
+
+            // check(..., null) is true when the cell does not exist; check(..., value) when its latest value equals it
+            private boolean conditionHolds() {
+                return check(row, family, checkQualifier, expectedValue);
             }
         };
     }

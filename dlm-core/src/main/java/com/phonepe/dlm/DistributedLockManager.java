@@ -115,8 +115,16 @@ public class DistributedLockManager {
     /**
      * This method releases the acquired lock, allowing other threads to acquire it.
      *
+     * <p>
+     * Release only removes the lock if it is still held by this lock instance. If the lock outlived its TTL and was
+     * re-acquired by another holder, the other holder's lock is left intact.
+     *
      * @param lock The lock which is acquired
-     * @return true if the lock is successfully released, otherwise false
+     * @return true if this instance's lock record was removed; false if this instance did not hold the lock, or if
+     * the lock is no longer this instance's (it expired and was re-acquired by another holder, or its record is
+     * already gone). Note that a lock which expired but was not re-acquired may still be released with true on stores
+     * that physically retain expired records until a later sweep (e.g. Aerospike); this is harmless, as only this
+     * instance's own stale record is removed.
      */
     public boolean releaseLock(final Lock lock) {
         return lockBase.releaseLock(lock);

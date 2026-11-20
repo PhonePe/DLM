@@ -252,6 +252,44 @@ class DistributedLockWithAerospikeTest {
         }
     }
 
+    @Test
+    void releaseAfterExpiryDoesNotRemoveLockReacquiredByAnotherHolderTest() {
+        final Lock holderA = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
+        lockManager.tryAcquireLock(holderA, Duration.ofSeconds(1));
+
+        // A's lock expires while A is still "working"; B acquires it.
+        final Lock holderB = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
+        awaitAcquire(lockManager, holderB, Duration.ofSeconds(30));
+
+        // A's late release must not delete B's lock.
+        Assertions.assertFalse(lockManager.releaseLock(holderA));
+        Assertions.assertFalse(holderA.getAcquiredStatus().get());
+        final Lock holderC = lockManager.getLockInstance("LOCK_ID", LockLevel.DC);
+        final DLMException exception = assertThrows(DLMException.class, () -> lockManager.tryAcquireLock(holderC));
+        assertEquals(ErrorCode.LOCK_UNAVAILABLE, exception.getErrorCode());
+
+        // B still owns the lock and can release it.
+        Assertions.assertTrue(lockManager.releaseLock(holderB));
+        lockManager.tryAcquireLock(holderC);
+        Assertions.assertTrue(holderC.getAcquiredStatus().get());
+    }
+
+    @Test
+    void releaseAfterExpiryDoesNotRemoveXDCLockReacquiredFromAnotherFarmTest() {
+        // Shares the client with lockManager, which closes it on destroy.
+        final DistributedLockManager otherFarmLockManager = getLockManager(LockMode.EXCLUSIVE, "FA2");
+        final Lock holderA = lockManager.getLockInstance("LOCK_ID", LockLevel.XDC);
+        lockManager.tryAcquireLock(holderA, Duration.ofSeconds(1));
+
+        final Lock holderB = otherFarmLockManager.getLockInstance("LOCK_ID", LockLevel.XDC);
+        awaitAcquire(otherFarmLockManager, holderB, Duration.ofSeconds(30));
+
+        Assertions.assertFalse(lockManager.releaseLock(holderA));
+        final Lock holderC = lockManager.getLockInstance("LOCK_ID", LockLevel.XDC);
+        assertThrows(DLMException.class, () -> lockManager.tryAcquireLock(holderC));
+        Assertions.assertTrue(otherFarmLockManager.releaseLock(holderB));
+    }
+
     @AfterEach
     void tearDown() {
         if (aerospikeClient != null) {
@@ -263,9 +301,13 @@ class DistributedLockWithAerospikeTest {
     }
 
     private DistributedLockManager getLockManager(final LockMode lockMode) {
+        return getLockManager(lockMode, "FA1");
+    }
+
+    private DistributedLockManager getLockManager(final LockMode lockMode, final String farmId) {
         return lockMode.accept(() -> DistributedLockManager.builder()
                 .clientId("CLIENT_ID")
-                .farmId("FA1")
+                .farmId(farmId)
                 .lockBase(LockBase.builder()
                         .mode(lockMode)
                         .lockStore(AerospikeStore.builder()
@@ -275,5 +317,19 @@ class DistributedLockWithAerospikeTest {
                                 .build())
                         .build())
                 .build());
+    }
+
+    /**
+     * Polls {@code tryAcquireLock} until the lock becomes available (e.g. after the previous holder's TTL expires).
+     */
+    private static void awaitAcquire(final DistributedLockManager manager, final Lock lock, final Duration ttl) {
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(20))
+                .pollInterval(Duration.ofMillis(200))
+                .ignoreException(DLMException.class)
+                .until(() -> {
+                    manager.tryAcquireLock(lock, ttl);
+                    return lock.getAcquiredStatus().get();
+                });
     }
 }

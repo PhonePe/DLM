@@ -83,7 +83,34 @@ Each lock record contains two bins:
 | Bin name | Format | Content |
 |----------|--------|---------|
 | `<farmId>##data` | Integer | `1` (marker) |
-| `<farmId>##uat`  | Long    | Timestamp of lock acquisition (`System.currentTimeMillis()`) |
+| `<farmId>##uat`  | Long    | Timestamp of lock acquisition (epoch millis); also the ownership stamp checked on release |
+
+## Release
+
+Release is ownership-checked using a server-side **filter expression** (requires Aerospike server 5.2+):
+
+```java
+deletePolicy.filterExp = Exp.build(Exp.eq(Exp.intBin("<farmId>##uat"), Exp.val(acquiredAt)));
+deletePolicy.failOnFilteredOut = true;
+aerospikeClient.delete(deletePolicy, key);
+```
+
+| Outcome | `remove` returns |
+|---------|------------------|
+| Record carries this holder's `acquiredAt` → deleted | `true` |
+| Record expired but not yet removed by the expiry sweep (`nsup-period`), still carrying this holder's `acquiredAt` → deleted | `true` |
+| Record not found (released, or already swept) | `false` |
+| Record belongs to another holder (`FILTERED_OUT`) | `false` (not retried) |
+
+!!! note
+    Aerospike hides an expired record from reads immediately but keeps it until the namespace's expiry sweep. A
+    holder whose lock expired and was **not** re-acquired therefore still matches its own stamp, and its release
+    returns `true` (removing only its own stale record). This does not affect safety: a record re-created by another
+    holder carries a different stamp and is never deleted.
+
+Because the check and the delete are a single server-side operation, a holder whose lock expired can never delete a
+lock that another holder acquired afterwards. For `XDC` locks, a record created from another farm has no
+`<farmId>##uat` bin for this farm, so it is filtered out as well.
 
 ## Initialization
 

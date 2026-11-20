@@ -79,6 +79,26 @@ boolean released = lockManager.releaseLock(lock);
 |-------------|---------|
 | `true` | Lock was held by this instance and has been removed from the store. |
 | `false` | Lock was not held (`acquiredStatus` was already `false`). No store operation performed. |
+| `false` | Lock is **no longer this instance's**: it expired and was re-acquired by another holder (whose lock is left intact), or its record is already gone. A warning is logged. |
+
+Release is **ownership-checked**. On acquisition, the lock record is stamped with the acquisition time
+(epoch millis), which is also kept on the `Lock` instance (`lock.getAcquiredAt()`). On release, the record is
+removed only if it still carries that timestamp, as a single atomic operation in the store. This prevents a holder
+whose lock outlived its TTL from deleting the lock that another holder acquired afterwards.
+
+!!! warning
+    A `false` return after a successful acquisition means the lock expired while the work was still running, so the
+    critical section was not fully protected. Choose a TTL comfortably longer than the work it guards.
+
+!!! note
+    The converse does not hold on every store: if a lock expired but **nobody re-acquired it**, release may still
+    return `true` on stores that keep expired records until a later sweep (Aerospike, until the namespace's
+    `nsup-period` sweep). Only this instance's own stale record is removed in that case, so it is harmless. HBase
+    returns `false`, as expired cells are invisible to its check-and-delete.
+
+!!! note
+    The ownership check relies on a successor's acquisition timestamp differing from the expired holder's, which
+    holds for TTLs of at least one second.
 
 ### `getLockInstance`
 
